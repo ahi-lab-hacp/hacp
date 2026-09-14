@@ -34,6 +34,10 @@ This separation makes HACP portable across platforms and verifiable across organ
 
 Protocol specification: [ahi-lab.com/hacp](https://ahi-lab.com/hacp)
 
+Repository specification: [`specification/hacp.md`](specification/hacp.md) ·
+[Standardization and adoption plan](STANDARDIZATION.md) ·
+[Implementation registry](IMPLEMENTERS.md)
+
 ## Why HACP is needed
 
 Today, a website usually sees an agent as just another HTTP client. Consider an airline ticket website receiving two nearly identical booking requests. One may come from a trusted travel agent that Alice asked to book a Friday flight to New York for no more than $600. The other may come from an attacker-controlled agent attempting stolen-card purchases, inventory abuse, or thousands of unwanted reservations. Authentication can identify the software making each request, but it does not prove which human authorized the booking, what that person intended, or whether the selected flight and price remain within their instructions.

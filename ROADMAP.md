@@ -17,6 +17,8 @@
 - Expanded positive and negative signature vectors
 - Durable nonce and revocation adapters
 - OpenAPI description for the HTTP binding
+- Standards-aligned signature profile evaluation using RFC 8785, RFC 9421, JWS, and W3C Data Integrity
+- Public `/.well-known/hacp.json` discovery profile
 - Standard constraint vocabulary registry
 - A2A and MCP binding profiles
 - Python reference SDK using the same conformance suite

@@ -2,6 +2,10 @@
 
 The rendered protocol specification is published at [ahi-lab.com/hacp](https://ahi-lab.com/hacp).
 
+The repository's normative, implementation-neutral source is
+[`hacp.md`](hacp.md). The website is its explanatory presentation and must not
+silently define different wire or authorization semantics.
+
 This directory contains machine-readable resources shared by every language implementation:
 
 - [`schema/hacp.schema.json`](schema/hacp.schema.json) — JSON Schema for canonical HACP objects;
@@ -15,4 +19,6 @@ Changes to object meaning, canonical representation, signing inputs, or verifica
 4. implementation tests;
 5. compatibility review under the project governance process.
 
-The website is explanatory and normative requirements are expressed through uppercase requirement words. Machine-readable artifacts in this repository define the shapes exercised by the reference implementation.
+Normative requirements are expressed through uppercase requirement words.
+Machine-readable artifacts define the shapes and behavior exercised by the
+reference implementation and independent implementations.

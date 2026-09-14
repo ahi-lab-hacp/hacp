@@ -1,0 +1,62 @@
+name: Implementation report
+description: Register an independent HACP Agent, Receiver, binding, or SDK
+title: "implementation: "
+labels: [implementation]
+body:
+  - type: input
+    id: repository
+    attributes:
+      label: Repository and version
+      placeholder: "https://github.com/example/hacp-python — v0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: maintainer
+    attributes:
+      label: Maintainer
+      description: Organization or individuals responsible for the implementation.
+    validations:
+      required: true
+  - type: dropdown
+    id: roles
+    attributes:
+      label: Primary role
+      multiple: true
+      options:
+        - Core object producer
+        - Agent signer
+        - HTTP sender
+        - Receiver verifier
+        - Receipt verifier
+        - Object resolver
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Language and runtime
+      placeholder: "Python 3.13 / FastAPI"
+    validations:
+      required: true
+  - type: textarea
+    id: conformance
+    attributes:
+      label: Conformance results
+      description: Include reproducible commands and applicable positive and negative vector results.
+    validations:
+      required: true
+  - type: textarea
+    id: deviations
+    attributes:
+      label: Known deviations or unsupported features
+      description: Write "None known" when all applicable behavior is implemented.
+    validations:
+      required: true
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Public registry
+      options:
+        - label: I consent to this report being summarized in IMPLEMENTERS.md.
+          required: true
+
