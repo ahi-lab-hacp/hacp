@@ -78,6 +78,12 @@ authorized for an identity. The Receiver MUST apply local trust policy to every
 verification method. A witnessed approval is valid only when the Receiver
 accepts the witness or organization as an attester for the named Principal.
 
+Verification-method authorization MUST consider the proof creation time and
+the key lifecycle. Retired public keys SHOULD remain resolvable for historical
+proofs created while active. A key revoked as compromised MUST fail current
+authorization according to Receiver policy even when its cryptographic
+signature remains mathematically valid.
+
 ### 4.4 Receiver sovereignty
 
 Passing HACP verification does not require the Receiver to execute an action.
@@ -329,6 +335,10 @@ Deployments MUST:
 - preserve denial behavior when dependencies fail;
 - rate-limit public endpoints and retain security-relevant verification events;
 - rotate keys with stable verification-method identifiers and historical lookup.
+
+The non-normative [production deployment boundary](../docs/production-deployment.md)
+describes isolated approval, signing-provider, durable nonce, key-lifecycle, and
+effect-transaction integrations.
 
 HACP cannot prevent a properly authorized malicious human from requesting a
 harmful action, guarantee that evidence is truthful, or replace fraud detection,
