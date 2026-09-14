@@ -4,6 +4,7 @@ export * from "./constraints.js";
 export * from "./crypto.js";
 export * from "./decision.js";
 export * from "./errors.js";
+export * from "./intent.js";
 export * from "./mandate.js";
 export * from "./memory.js";
 export * from "./revocation.js";

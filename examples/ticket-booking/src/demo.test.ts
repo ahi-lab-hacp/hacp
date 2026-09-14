@@ -7,6 +7,7 @@ describe("ticket-booking example", () => {
     expect(demo.outcomes.map(({ name, verdict }) => ({ name, verdict }))).toEqual([
       { name: "wrong authenticated agent", verdict: "DENY" },
       { name: "price exceeds human limit", verdict: "DENY" },
+      { name: "quantity exceeds human intent", verdict: "DENY" },
       { name: "action changed after signing", verdict: "DENY" },
       { name: "authorized booking", verdict: "ALLOW" },
       { name: "same action replayed", verdict: "DENY" },

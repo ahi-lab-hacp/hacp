@@ -48,10 +48,15 @@ function fixture() {
 
 const extractor: DecisionExtractor = {
   extract: ({ evidence }) => ({
-    intent: { type: "flight.purchase", statement: "Buy a flight to NYC for at most USD 600." },
+    intent: {
+      type: "flight.purchase",
+      statement: "Buy one flight to NYC for at most USD 600.",
+      parameters: { destination: "NYC", quantity: 1 },
+    },
     constraints: {
       destination: ["NYC"],
       maxAmount: { currency: "USD", value: "600.00" },
+      maxQuantity: 1,
     },
     fieldSources: [
       { path: "/intent", basis: "ASSERTED", evidenceDigest: evidence.digest },
@@ -94,6 +99,7 @@ async function authorizedFlow(amount = "542.00") {
       target: "https://api.example-air.com/flights/UA123",
       parameters: {
         destination: "NYC",
+        quantity: 1,
         amount: { currency: "USD", value: amount },
       },
     },
@@ -160,6 +166,39 @@ describe("HACP authorization flow", () => {
     const result = await verifyAction(flow.options);
     expect(result.receipt.verdict).toBe("DENY");
     expect(result.receipt.reasonCodes).toContain("CONSTRAINT_VIOLATION:maxAmount");
+  });
+
+  it("denies a signed action whose parameters do not match the human intent", async () => {
+    const flow = await authorizedFlow();
+    const mismatched = createActionEnvelope({
+      mandate: flow.mandate,
+      agent: flow.agent,
+      signer: flow.agentSigner,
+      nonce: "action-nonce-quantity-mismatch",
+      action: {
+        ...flow.envelope.action,
+        parameters: { ...flow.envelope.action.parameters, quantity: 100 },
+      },
+    });
+    const result = await verifyAction({ ...flow.options, actionEnvelope: mismatched });
+    expect(result.receipt.verdict).toBe("DENY");
+    expect(result.receipt.reasonCodes).toContain("INTENT_PARAMETER_MISMATCH:quantity");
+  });
+
+  it("rejects a root Mandate permission that differs from the signed intent", async () => {
+    const flow = await authorizedFlow();
+    expect(() =>
+      issueMandate({
+        decision: flow.decision,
+        issuer: flow.human,
+        subject: flow.agent,
+        signer: flow.humanSigner,
+        permissions: ["account.delete"],
+        constraints: flow.decision.constraints,
+        audience: ["https://api.example-air.com"],
+        notAfter: "2026-09-14T12:00:00.000Z",
+      }),
+    ).toThrow("permissions must match");
   });
 
   it("denies a request sent to an audience outside the mandate", async () => {
@@ -236,6 +275,7 @@ describe("delegation attenuation", () => {
       constraints: {
         destination: ["NYC"],
         maxAmount: { currency: "USD", value: "500.00" },
+        maxQuantity: 1,
       },
       audience: ["https://api.example-air.com"],
       notAfter: "2026-09-14T10:00:00.000Z",

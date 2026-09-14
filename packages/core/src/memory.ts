@@ -1,3 +1,4 @@
+import { HacpError } from "./errors.js";
 import type {
   Decision,
   KeyMaterial,
@@ -7,7 +8,6 @@ import type {
   RevocationRecord,
   RevocationResolver,
 } from "./types.js";
-import { HacpError } from "./errors.js";
 
 export class InMemoryNonceStore implements NonceStore {
   readonly #entries = new Map<string, number>();

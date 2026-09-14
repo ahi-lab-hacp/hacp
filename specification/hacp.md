@@ -118,6 +118,11 @@ A Decision contains:
 - optional superseded Decision identifiers;
 - an attestation when the state is `ATTESTED`.
 
+The intent `type` identifies the authorized action type. Intent `parameters`
+are exact, machine-evaluable assertions about the requested effect. Values that
+represent ranges, maxima, sets, or other policy semantics belong in
+`constraints`.
+
 The attestation covers every Decision field except the attestation itself.
 
 ### 5.3 Mandate
@@ -129,6 +134,9 @@ interval, limits further delegation, and includes a nonce and proof.
 A root Mandate issuer MUST be the Decision Principal or its organization under
 the Receiver's accepted identity policy. A delegated Mandate issuer MUST equal
 the parent Mandate subject.
+
+Every root Mandate permission MUST equal the controlling Decision intent type.
+A Mandate MUST NOT translate a Decision into a different action type.
 
 Every child Mandate MUST monotonically narrow or preserve:
 
@@ -246,14 +254,16 @@ before the external effect:
 9. Verify every Mandate proof and issuer.
 10. Verify delegation continuity and monotonic attenuation.
 11. Verify leaf subject, permission, audience, validity, and revocation status.
-12. Evaluate the concrete action against all known constraints.
-13. Atomically consume the Action Envelope nonce.
-14. Apply receiver-local policy.
-15. Return a signed Receipt.
+12. Verify that the action type and machine-readable parameters match the
+    controlling Decision intent.
+13. Evaluate the concrete action against all known constraints.
+14. Atomically consume the Action Envelope nonce.
+15. Apply receiver-local policy.
+16. Return a signed Receipt.
 
-Missing objects, unknown keys, unknown security-relevant constraints, failed
-proofs, ambiguous identities, and unavailable revocation state MUST fail closed
-to `REVIEW` or `DENY` according to receiver policy.
+Missing objects, unknown keys, unknown security-relevant intent semantics or
+constraints, failed proofs, ambiguous identities, and unavailable revocation
+state MUST fail closed to `REVIEW` or `DENY` according to receiver policy.
 
 ## 9. Assurance
 
@@ -359,4 +369,3 @@ security review.
 - [RFC 7515: JSON Web Signature](https://www.rfc-editor.org/rfc/rfc7515)
 - [W3C Verifiable Credentials Data Model 2.0](https://www.w3.org/TR/vc-data-model-2.0/)
 - [W3C Verifiable Credential Data Integrity 1.0](https://www.w3.org/TR/vc-data-integrity/)
-

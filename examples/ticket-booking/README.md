@@ -20,7 +20,7 @@ sequenceDiagram
   HACP-->>Agent: Decision + scoped Mandate
   Agent->>HACP: createActionEnvelope(...)
   Agent->>API: authenticated HTTP request + signed envelope
-  API->>HACP: verify identity, proofs, scope, price, nonce, policy
+  API->>HACP: verify identity, proofs, intent, quantity, price, nonce, policy
   HACP-->>API: signed ALLOW / DENY Receipt
   API-->>Agent: booking result + Receipt
 ```
@@ -34,12 +34,13 @@ pnpm install
 pnpm --filter @hacp-example/ticket-booking start
 ```
 
-The output shows five requests:
+The output shows six requests:
 
 | Scenario | Expected result | Why |
 | --- | --- | --- |
 | Wrong authenticated agent | `DENY` | Transport identity does not match the signed agent identity |
 | Price above $600 | `DENY` | The concrete action exceeds Alice's mandate |
+| Request for 100 tickets | `DENY` | The concrete quantity contradicts Alice's signed one-ticket intent |
 | Destination changed after signing | `DENY` | The ActionEnvelope signature no longer verifies |
 | Authorized $542 NYC booking | `ALLOW` | Identity, provenance, scope, constraints, and policy all pass |
 | Replay of the allowed request | `DENY` | The one-time action nonce has already been consumed |
@@ -52,7 +53,7 @@ Every response contains a verifier-signed Receipt, including denials. The exampl
 pnpm --filter @hacp-example/ticket-booking serve
 ```
 
-Open `http://localhost:8787`. The page runs all five cases and lets you inspect
+Open `http://localhost:8787`. The page runs all six cases and lets you inspect
 the complete signed Decision, Mandate, Action Envelopes, Receipts, and public
 discovery document. The server exposes:
 

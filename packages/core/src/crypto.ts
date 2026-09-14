@@ -2,9 +2,9 @@ import {
   createPrivateKey,
   createPublicKey,
   generateKeyPairSync,
+  type KeyObject,
   sign as nodeSign,
   verify as nodeVerify,
-  type KeyObject,
 } from "node:crypto";
 import { canonicalBytes } from "./canonicalize.js";
 import { HacpError } from "./errors.js";

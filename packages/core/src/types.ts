@@ -189,6 +189,16 @@ export interface ConstraintEvaluation {
   verdict: Verdict;
 }
 
+export interface IntentEvaluation {
+  reasonCodes: string[];
+  verdict: Verdict;
+}
+
+export type IntentEvaluator = (
+  intent: Intent,
+  action: Action,
+) => IntentEvaluation | Promise<IntentEvaluation>;
+
 export type ConstraintEvaluator = (
   constraints: ConstraintSet,
   action: Action,
@@ -214,6 +224,7 @@ export interface VerificationOptions {
   verifier: string;
   now?: () => Date;
   clockSkewMs?: number;
+  evaluateIntent?: IntentEvaluator;
   evaluateConstraints?: ConstraintEvaluator;
   isConstraintSetNarrower?: ConstraintNarrowing;
   maximumDelegationDepth?: number;

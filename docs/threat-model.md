@@ -23,6 +23,7 @@ HACP aims to preserve:
 | Stolen envelope is replayed | Audience-bound proof, short validity, and atomic nonce consumption |
 | Agent lies about its identity | Independent transport authentication bound to `ActionEnvelope.agent` |
 | Agent signs a harmless label but sends harmful parameters | Signature and policy evaluation cover the complete canonical action |
+| Agent authenticates correctly but proposes a different effect | Mandatory intent-to-action binding and constraint evaluation |
 | Evidence is replaced later | Immutable evidence digest committed before attestation |
 | Mandate is withdrawn | Fresh revocation resolution under receiver policy |
 | Verifier behavior changes | Receipt records the exact policy version used |

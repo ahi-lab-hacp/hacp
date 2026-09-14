@@ -2,9 +2,9 @@ import { randomUUID } from "node:crypto";
 import { createProof, withoutProof } from "./crypto.js";
 import { invariant } from "./errors.js";
 import {
-  HACP_VERSION,
   type Action,
   type ActionEnvelope,
+  HACP_VERSION,
   type Mandate,
   type Signer,
 } from "./types.js";

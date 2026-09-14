@@ -60,6 +60,12 @@ function evaluateMaxAmount(limit: JsonValue, action: Action): boolean | undefine
   return maximum !== undefined && actual !== undefined ? actual <= maximum : undefined;
 }
 
+function evaluateMaximum(limit: JsonValue, actual: JsonValue | undefined): boolean | undefined {
+  const maximum = decimal(limit);
+  const value = decimal(actual);
+  return maximum !== undefined && value !== undefined ? value <= maximum : undefined;
+}
+
 function evaluateTarget(allowed: JsonValue, action: Action): boolean | undefined {
   if (!Array.isArray(allowed) || !allowed.every((value) => typeof value === "string")) {
     return undefined;
@@ -97,6 +103,8 @@ export function evaluateConstraints(
   for (const [key, constraint] of Object.entries(constraints)) {
     let result: boolean | undefined;
     if (key === "maxAmount") result = evaluateMaxAmount(constraint, action);
+    else if (key === "maxQuantity")
+      result = evaluateMaximum(constraint, action.parameters.quantity);
     else if (key === "allowedTargets") result = evaluateTarget(constraint, action);
     else if (key === "notAfter") continue;
     else result = evaluateParameter(constraint, action.parameters[key]);

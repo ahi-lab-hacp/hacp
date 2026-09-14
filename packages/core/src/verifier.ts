@@ -5,17 +5,18 @@ import { evaluateConstraints, isConstraintSetNarrower } from "./constraints.js";
 import { createProof, verifyProof, withoutProof } from "./crypto.js";
 import { decisionAttestationPayload, verifyDecisionAttestation } from "./decision.js";
 import { HacpError } from "./errors.js";
+import { evaluateIntent } from "./intent.js";
 import { mandatePayload } from "./mandate.js";
 import {
-  HACP_VERSION,
   type Action,
   type Decision,
+  HACP_VERSION,
   type Mandate,
   type Receipt,
   type Signer,
+  type Verdict,
   type VerificationOptions,
   type VerificationResult,
-  type Verdict,
 } from "./types.js";
 
 interface ReceiptInput {
@@ -126,6 +127,9 @@ async function verifyMandateChain(
       if (!roots.includes(mandate.issuer)) reasons.push("ROOT_ISSUER_NOT_AUTHORIZED");
       if (!(await narrowing(mandate.constraints, decision.constraints))) {
         reasons.push("ROOT_CONSTRAINT_ESCALATION");
+      }
+      if (!mandate.permissions.every((permission) => permission === decision.intent.type)) {
+        reasons.push("INTENT_PERMISSION_ESCALATION");
       }
       continue;
     }
@@ -241,9 +245,23 @@ export async function verifyAction(options: VerificationOptions): Promise<Verifi
     if (await options.revocations.isRevoked(decision.id, now)) return deny(["DECISION_REVOKED"]);
     if (!leaf.permissions.includes(envelope.action.type)) return deny(["ACTION_OUT_OF_SCOPE"]);
 
+    const context = { action: envelope.action, decision, mandateChain: chain };
+    const intentResult = await (options.evaluateIntent ?? evaluateIntent)(
+      decision.intent,
+      envelope.action,
+    );
+    if (intentResult.verdict !== "ALLOW") {
+      return resultWithReceipt(
+        options,
+        now,
+        intentResult.verdict,
+        intentResult.reasonCodes,
+        context,
+      );
+    }
+
     const evaluate = options.evaluateConstraints ?? evaluateConstraints;
     const constraintResult = await evaluate(leaf.constraints, envelope.action);
-    const context = { action: envelope.action, decision, mandateChain: chain };
     if (constraintResult.verdict !== "ALLOW") {
       return resultWithReceipt(
         options,
@@ -271,6 +289,7 @@ export async function verifyAction(options: VerificationOptions): Promise<Verifi
       "DECISION_ATTESTATION_VALID",
       "AGENT_IDENTITY_BOUND",
       "MANDATE_CHAIN_VALID",
+      "INTENT_MATCH",
       "WITHIN_SCOPE",
       ...(policy.reasonCodes ?? []),
     ];

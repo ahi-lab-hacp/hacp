@@ -57,6 +57,7 @@ No single component is trusted to invent authority:
 - A `PROPOSED` Decision has no authorization effect.
 - Material changes to an attested Decision require a new Decision identifier and attestation.
 - Every child Mandate is equal to or narrower than its parent.
+- Root Mandate permissions match the controlling signed intent type.
 - The authenticated caller equals both the ActionEnvelope agent and final Mandate subject.
 - The receiving origin is in the final Mandate audience.
 - Action nonces are consumed atomically within their scope.
@@ -71,7 +72,7 @@ The reference implementation requires applications to provide:
 - `KeyResolver` and `VerificationMethodAuthorizer` for identity infrastructure;
 - object resolvers for Decisions and Mandates;
 - `RevocationResolver` and durable `NonceStore` implementations;
-- `ConstraintEvaluator` for domain-specific effects;
+- `IntentEvaluator` and `ConstraintEvaluator` for domain-specific effects;
 - `VerificationPolicy` for receiver-local risk and business rules.
 
 These interfaces keep the protocol independent of model provider, identity scheme, database, transport, and application domain.

@@ -1,12 +1,12 @@
 import { randomUUID } from "node:crypto";
+import { isConstraintSetNarrower } from "./constraints.js";
 import { createProof, withoutProof } from "./crypto.js";
 import { invariant } from "./errors.js";
-import { isConstraintSetNarrower } from "./constraints.js";
 import {
-  HACP_VERSION,
   type ConstraintNarrowing,
   type ConstraintSet,
   type Decision,
+  HACP_VERSION,
   type Mandate,
   type Signer,
 } from "./types.js";
@@ -50,6 +50,11 @@ export function issueMandate(options: IssueMandateOptions): Mandate {
     options.decision.state === "ATTESTED" && options.decision.attestation,
     "DECISION_NOT_ATTESTED",
     "A Mandate requires an attested Decision",
+  );
+  invariant(
+    options.permissions.every((permission) => permission === options.decision.intent.type),
+    "SCOPE_ESCALATION",
+    "Mandate permissions must match the controlling Decision intent type",
   );
   const now = options.signer.now?.() ?? new Date();
   const unsigned: Omit<Mandate, "proof"> = {

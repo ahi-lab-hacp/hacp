@@ -1,18 +1,18 @@
 import {
+  type ActionEnvelope,
   attestDecision,
   createActionEnvelope,
+  type Decision,
+  type DecisionExtractor,
   extractDecision,
   generateEd25519KeyPair,
   InMemoryHacpStore,
   InMemoryNonceStore,
   issueMandate,
-  verifyReceipt,
-  type ActionEnvelope,
-  type Decision,
-  type DecisionExtractor,
   type Mandate,
   type Receipt,
   type Signer,
+  verifyReceipt,
 } from "@ahi-lab-hacp/core";
 import {
   createHacpDiscoveryDocument,
@@ -75,11 +75,12 @@ function createExtractor(ticketApi: string): DecisionExtractor {
       intent: {
         type: "flight.purchase",
         statement: "Book Alice a Friday afternoon flight to New York for at most USD 600.",
-        parameters: { destination: "NYC", departureWindow: "Friday afternoon" },
+        parameters: { destination: "NYC", departureWindow: "Friday afternoon", quantity: 1 },
       },
       constraints: {
         destination: ["NYC"],
         maxAmount: { currency: "USD", value: "600.00" },
+        maxQuantity: 1,
         allowedTargets: [ticketApi],
       },
       fieldSources: [
@@ -204,7 +205,7 @@ export async function runTicketBookingDemo(
       }),
   });
 
-  const envelopeFor = (amount: string): ActionEnvelope =>
+  const envelopeFor = (amount: string, quantity = 1): ActionEnvelope =>
     createActionEnvelope({
       mandate,
       agent,
@@ -214,6 +215,8 @@ export async function runTicketBookingDemo(
         target: `${ticketApi}/flights/UA123`,
         parameters: {
           destination: "NYC",
+          departureWindow: "Friday afternoon",
+          quantity,
           amount: { currency: "USD", value: amount },
         },
       },
@@ -250,6 +253,7 @@ export async function runTicketBookingDemo(
     "did:web:attacker.example",
   );
   const overBudget = await send("price exceeds human limit", envelopeFor("700.00"));
+  const overQuantity = await send("quantity exceeds human intent", envelopeFor("54200.00", 100));
   const alteredEnvelope = envelopeFor("542.00");
   alteredEnvelope.action.parameters.destination = "SFO";
   const tampered = await send("action changed after signing", alteredEnvelope);
@@ -263,6 +267,6 @@ export async function runTicketBookingDemo(
     mandate,
     principal: human,
     agent,
-    outcomes: [wrongIdentity, overBudget, tampered, allowed, replay],
+    outcomes: [wrongIdentity, overBudget, overQuantity, tampered, allowed, replay],
   };
 }

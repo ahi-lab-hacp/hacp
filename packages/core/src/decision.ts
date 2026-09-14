@@ -3,12 +3,12 @@ import { digestObject, sha256 } from "./canonicalize.js";
 import { createProof, verifyProof } from "./crypto.js";
 import { invariant } from "./errors.js";
 import {
-  HACP_VERSION,
   type AssuranceLevel,
   type AttestationMethod,
   type Decision,
   type DecisionExtractor,
   type EvidenceRef,
+  HACP_VERSION,
   type KeyResolver,
   type Principal,
   type Signer,
