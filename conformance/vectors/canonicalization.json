@@ -1,0 +1,17 @@
+[
+  {
+    "name": "member ordering",
+    "input": { "z": 1, "a": { "d": true, "b": "x" } },
+    "canonical": "{\"a\":{\"b\":\"x\",\"d\":true},\"z\":1}"
+  },
+  {
+    "name": "array ordering is preserved",
+    "input": { "permissions": ["read", "write"], "active": true },
+    "canonical": "{\"active\":true,\"permissions\":[\"read\",\"write\"]}"
+  },
+  {
+    "name": "unicode and control escaping",
+    "input": { "message": "human\nagent", "unicode": "协调" },
+    "canonical": "{\"message\":\"human\\nagent\",\"unicode\":\"协调\"}"
+  }
+]
