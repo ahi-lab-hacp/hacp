@@ -47,7 +47,7 @@ HACP gives the legitimate request a verifiable chain: Alice's reviewed decision,
 
 ![Why HACP: a ticket website allows the same legitimate agent to book one $542 ticket matching a signed $600 limit, but denies a hijacked action requesting 100 tickets](docs/assets/why-hacp.png)
 
-[Run the live ticket-booking demonstration](https://hacp-ticket-demo-dmy3rfwd7q-uw.a.run.app) to compare a valid USD 542 booking with wrong-identity, over-budget, tampered, and replayed Agent requests. Every case returns a signed Receipt, and the complete protocol objects and public keys are inspectable.
+[Run the live ticket-booking demonstration](https://hacp-ticket-demo-dmy3rfwd7q-uw.a.run.app) to compare a valid one-ticket USD 542 booking with wrong-identity, over-budget, 100-ticket intent-mismatch, tampered, and replayed Agent requests. Every case returns a signed Receipt, and the complete protocol objects and public keys are inspectable.
 
 ## The trust boundary
 
