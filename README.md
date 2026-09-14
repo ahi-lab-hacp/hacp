@@ -133,6 +133,24 @@ Attested Decision ──► Mandate ──► ActionEnvelope ──► Receipt
                               RevocationRecord
 ```
 
+## Reference integration: Cofeat
+
+[Cofeat](https://github.com/edieYoung/educated/pull/17) is the first end-to-end, cross-service HACP integration. An explicit Slack action creates an attested Decision for the verified Slack member and a narrow, expiring Mandate for the separately deployed Cofeat Slack agent. The agent signs the exact design-generation ActionEnvelope and sends it over the HACP HTTP binding.
+
+The Cofeat API independently authenticates the Slack service, verifies the agent and authority signatures, audience, permission, target, feature/channel constraints, expiration, and nonce, then applies its local policy. Only an `ALLOW` Receipt reaches the model provider. Altered actions and replays are denied before any model call, and every verification attempt is retained with its signed Receipt.
+
+This integration demonstrates the intended composition:
+
+```text
+Slack identity + explicit click   HACP provenance                 API policy
+            │                          │                              │
+            └─ Decision → Mandate → signed ActionEnvelope → verify ──┤
+                                                                      ▼
+                                                           effect + Receipt
+```
+
+The service bearer token remains mandatory. It authenticates the calling workload; HACP binds that workload to the human decision authorizing the concrete action.
+
 ## Packages
 
 | Package | Responsibility |
@@ -145,7 +163,7 @@ HACP is language-neutral. TypeScript is the 0.1 reference implementation, follow
 
 ## Install
 
-Packages will be published under the `@ahi-lab-hacp` npm scope. During repository development:
+Packages are published under the `@ahi-lab-hacp` npm scope. During repository development:
 
 ```bash
 pnpm install
