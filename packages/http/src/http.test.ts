@@ -66,7 +66,7 @@ function verificationFixture() {
     authorizeVerificationMethod: (identity: string, method: string) =>
       method.startsWith(`${identity}#`),
     now: () => now,
-    nonces: new InMemoryNonceStore(),
+    nonces: new InMemoryNonceStore(() => now),
     policy: { version: "test@1", evaluate: () => ({ verdict: "ALLOW" as const }) },
     receiptSigner,
     resolveDecision: () => {

@@ -11,9 +11,14 @@ import { HacpError } from "./errors.js";
 
 export class InMemoryNonceStore implements NonceStore {
   readonly #entries = new Map<string, number>();
+  readonly #now: () => Date;
+
+  constructor(now: () => Date = () => new Date()) {
+    this.#now = now;
+  }
 
   consume(scope: string, nonce: string, expiresAt: Date): boolean {
-    const now = Date.now();
+    const now = this.#now().getTime();
     for (const [key, expiry] of this.#entries) {
       if (expiry <= now) this.#entries.delete(key);
     }

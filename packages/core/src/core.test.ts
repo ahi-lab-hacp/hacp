@@ -109,7 +109,7 @@ async function authorizedFlow(amount = "542.00") {
     resolveKey: context.store.resolveKey,
     authorizeVerificationMethod: (identity, method) => method.startsWith(`${identity}#`),
     revocations: context.store,
-    nonces: new InMemoryNonceStore(),
+    nonces: new InMemoryNonceStore(() => now),
     policy: { version: "test-policy@1", evaluate: () => ({ verdict: "ALLOW" }) },
     receiptSigner: context.receiptSigner,
     verifier: context.verifier,
