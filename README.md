@@ -19,6 +19,19 @@ The protocol is transport-neutral. It can accompany HTTP calls, A2A messages, MC
 
 > **Core guarantee:** every accepted agent action can be connected to explicit, bounded, and verifiable human authority.
 
+## Positioning
+
+HACP is a **generic, cross-platform provenance protocol for agent actions**. It is not tied to one model provider, agent framework, transport, organization, or application domain. The same Decision, Mandate, ActionEnvelope, and Receipt model can protect commerce, software changes, infrastructure operations, communications, data access, and other consequential actions.
+
+HACP is designed to compose with the existing agent and web security stack rather than replace it:
+
+- Authentication such as Web Bot Auth, OAuth, mTLS, or workload identity establishes **which agent is calling**.
+- Transports such as HTTP, MCP, A2A, queues, and internal RPC carry the request.
+- HACP establishes **which human or institution authorized the action, what they decided, which constraints apply, and whether the concrete action remains within that authority**.
+- Receiver-local policy determines whether that independently authenticated and provenance-backed action is accepted.
+
+This separation makes HACP portable across platforms and verifiable across organizational boundaries. An agent can create a HACP authorization chain in one system, carry it through another agent or transport, and present it to an independent service without requiring that service to trust the agent's private reasoning or its claim of good intent.
+
 Protocol specification: [ahi-lab.com/hacp](https://ahi-lab.com/hacp)
 
 ## Why HACP is needed
