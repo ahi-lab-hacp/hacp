@@ -3,6 +3,7 @@ packages:
   - "examples/*"
 
 linkWorkspacePackages: true
+autoInstallPeers: false
 
 allowBuilds:
   esbuild: true
