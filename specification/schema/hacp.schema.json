@@ -1,0 +1,261 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ahi-lab.com/hacp/schema/0.1/hacp.schema.json",
+  "title": "Human–Agent Coordination Protocol 0.1",
+  "description": "Canonical JSON objects exchanged by HACP implementations.",
+  "oneOf": [
+    { "$ref": "#/$defs/decision" },
+    { "$ref": "#/$defs/mandate" },
+    { "$ref": "#/$defs/actionEnvelope" },
+    { "$ref": "#/$defs/receipt" },
+    { "$ref": "#/$defs/revocation" }
+  ],
+  "$defs": {
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "verificationMethod", "createdAt", "proofValue"],
+      "properties": {
+        "type": { "const": "Ed25519Signature2020" },
+        "verificationMethod": { "type": "string", "minLength": 1 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "proofValue": { "type": "string", "minLength": 1 }
+      }
+    },
+    "principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["HUMAN", "INSTITUTION"] },
+        "organization": { "type": "string", "minLength": 1 }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "statement"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "statement": { "type": "string", "minLength": 1 },
+        "parameters": { "type": "object" }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["digest", "disclosure", "mediaType"],
+      "properties": {
+        "digest": { "type": "string", "pattern": "^sha256:" },
+        "disclosure": { "enum": ["DIGEST_ONLY", "SELECTIVE", "FULL"] },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "source": { "type": "string" }
+      }
+    },
+    "fieldSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "basis"],
+      "properties": {
+        "path": { "type": "string", "pattern": "^/" },
+        "basis": { "enum": ["ASSERTED", "INFERRED"] },
+        "evidenceDigest": { "type": "string", "pattern": "^sha256:" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "assuranceLevel", "attestedAt", "proof"],
+      "properties": {
+        "method": {
+          "enum": [
+            "DIRECT_CONFIRMATION",
+            "ORGANIZATION_POLICY",
+            "SIGNED_SOURCE",
+            "WITNESSED_APPROVAL"
+          ]
+        },
+        "assuranceLevel": { "enum": ["HACP_L0", "HACP_L1", "HACP_L2", "HACP_L3"] },
+        "attestedAt": { "type": "string", "format": "date-time" },
+        "proof": { "$ref": "#/$defs/proof" }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hacpVersion",
+        "type",
+        "id",
+        "state",
+        "principal",
+        "intent",
+        "constraints",
+        "evidence",
+        "fieldSources",
+        "createdAt"
+      ],
+      "properties": {
+        "hacpVersion": { "const": "0.1" },
+        "type": { "const": "decision" },
+        "id": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["PROPOSED", "ATTESTED", "REVOKED", "SUPERSEDED"] },
+        "principal": { "$ref": "#/$defs/principal" },
+        "intent": { "$ref": "#/$defs/intent" },
+        "constraints": { "type": "object" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/evidence" } },
+        "fieldSources": { "type": "array", "items": { "$ref": "#/$defs/fieldSource" } },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "attestation": { "$ref": "#/$defs/attestation" },
+        "supersedes": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "ATTESTED" } } },
+          "then": { "required": ["attestation"] }
+        }
+      ]
+    },
+    "mandate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hacpVersion",
+        "type",
+        "id",
+        "issuer",
+        "subject",
+        "decisionRef",
+        "permissions",
+        "constraints",
+        "audience",
+        "maxDelegationDepth",
+        "validFrom",
+        "notAfter",
+        "nonce",
+        "proof"
+      ],
+      "properties": {
+        "hacpVersion": { "const": "0.1" },
+        "type": { "const": "mandate" },
+        "id": { "type": "string", "minLength": 1 },
+        "issuer": { "type": "string", "minLength": 1 },
+        "subject": { "type": "string", "minLength": 1 },
+        "decisionRef": { "type": "string", "minLength": 1 },
+        "parentMandateRef": { "type": "string", "minLength": 1 },
+        "permissions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "constraints": { "type": "object" },
+        "audience": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        },
+        "maxDelegationDepth": { "type": "integer", "minimum": 0 },
+        "validFrom": { "type": "string", "format": "date-time" },
+        "notAfter": { "type": "string", "format": "date-time" },
+        "nonce": { "type": "string", "minLength": 1 },
+        "proof": { "$ref": "#/$defs/proof" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "target", "parameters"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "target": { "type": "string", "format": "uri" },
+        "parameters": { "type": "object" }
+      }
+    },
+    "actionEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hacpVersion",
+        "type",
+        "id",
+        "mandateRef",
+        "agent",
+        "action",
+        "nonce",
+        "createdAt",
+        "proof"
+      ],
+      "properties": {
+        "hacpVersion": { "const": "0.1" },
+        "type": { "const": "action-envelope" },
+        "id": { "type": "string", "minLength": 1 },
+        "mandateRef": { "type": "string", "minLength": 1 },
+        "agent": { "type": "string", "minLength": 1 },
+        "action": { "$ref": "#/$defs/action" },
+        "nonce": { "type": "string", "minLength": 1 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "proof": { "$ref": "#/$defs/proof" }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hacpVersion",
+        "type",
+        "id",
+        "verifier",
+        "verdict",
+        "actionDigest",
+        "mandateRef",
+        "reasonCodes",
+        "policyVersion",
+        "evaluatedAt",
+        "proof"
+      ],
+      "properties": {
+        "hacpVersion": { "const": "0.1" },
+        "type": { "const": "receipt" },
+        "id": { "type": "string", "minLength": 1 },
+        "verifier": { "type": "string", "minLength": 1 },
+        "verdict": { "enum": ["ALLOW", "DENY", "REVIEW"] },
+        "actionDigest": { "type": "string", "pattern": "^sha256:" },
+        "mandateRef": { "type": "string", "minLength": 1 },
+        "reasonCodes": { "type": "array", "items": { "type": "string" } },
+        "policyVersion": { "type": "string", "minLength": 1 },
+        "evaluatedAt": { "type": "string", "format": "date-time" },
+        "proof": { "$ref": "#/$defs/proof" }
+      }
+    },
+    "revocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hacpVersion",
+        "type",
+        "id",
+        "issuer",
+        "objectRef",
+        "reason",
+        "effectiveAt",
+        "createdAt",
+        "proof"
+      ],
+      "properties": {
+        "hacpVersion": { "const": "0.1" },
+        "type": { "const": "revocation" },
+        "id": { "type": "string", "minLength": 1 },
+        "issuer": { "type": "string", "minLength": 1 },
+        "objectRef": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string", "minLength": 1 },
+        "effectiveAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "proof": { "$ref": "#/$defs/proof" }
+      }
+    }
+  }
+}
