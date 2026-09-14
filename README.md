@@ -289,6 +289,15 @@ Run the complete example:
 pnpm --filter @hacp-example/basic start
 ```
 
+## Runnable examples
+
+| Example | What it demonstrates | Run |
+| --- | --- | --- |
+| [`examples/basic`](examples/basic) | Smallest complete Decision → Mandate → ActionEnvelope → Receipt flow | `pnpm --filter @hacp-example/basic start` |
+| [`examples/ticket-booking`](examples/ticket-booking) | Human-language extraction, HTTP binding, independent agent authentication, price/scope enforcement, tamper detection, replay protection, and signed receipts | `pnpm --filter @hacp-example/ticket-booking start` |
+
+The ticket-booking demo intentionally sends one valid request and four invalid requests, making the protocol's security boundaries visible in a single console table.
+
 ## Verification order
 
 A conforming verifier fails closed and checks:
@@ -318,7 +327,8 @@ hacp/
 ├── conformance/
 │   └── vectors/           # Cross-language canonical test vectors
 ├── examples/
-│   └── basic/             # Complete agent → server workflow
+│   ├── basic/             # Minimal agent → server workflow
+│   └── ticket-booking/    # Runnable allow/deny security demonstration
 ├── docs/                  # Architecture, threat model, and integrations
 └── .github/               # CI and contribution templates
 ```
