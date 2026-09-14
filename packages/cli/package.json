@@ -7,7 +7,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "hacp": "./dist/index.js"
+    "hacp": "dist/index.js"
   },
   "files": [
     "dist/index.js",
@@ -23,7 +23,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ahi-lab-hacp/core": "workspace:*"
+    "@ahi-lab-hacp/core": "^0.1.0"
   },
   "publishConfig": {
     "access": "public",

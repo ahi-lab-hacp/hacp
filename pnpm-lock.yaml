@@ -48,7 +48,7 @@ importers:
   packages/cli:
     dependencies:
       '@ahi-lab-hacp/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
 
   packages/core: {}
@@ -56,7 +56,7 @@ importers:
   packages/http:
     dependencies:
       '@ahi-lab-hacp/core':
-        specifier: workspace:*
+        specifier: ^0.1.0
         version: link:../core
 
 packages:
