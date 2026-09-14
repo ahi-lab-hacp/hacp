@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { digestObject, sha256 } from "./canonicalize.js";
-import { createProof, verifyProof } from "./crypto.js";
+import { createProof, createProofWithProvider, verifyProof } from "./crypto.js";
 import { invariant } from "./errors.js";
 import {
   type AssuranceLevel,
@@ -12,6 +12,7 @@ import {
   type KeyResolver,
   type Principal,
   type Signer,
+  type SigningProvider,
 } from "./types.js";
 
 export interface ExtractDecisionOptions {
@@ -76,6 +77,10 @@ export interface AttestDecisionOptions {
   signer: Signer;
 }
 
+export interface AttestDecisionWithProviderOptions extends Omit<AttestDecisionOptions, "signer"> {
+  signer: SigningProvider;
+}
+
 export function decisionAttestationPayload(decision: Decision): Omit<Decision, "attestation"> {
   const { attestation: _attestation, ...unsigned } = decision;
   return unsigned;
@@ -91,6 +96,33 @@ export function attestDecision(options: AttestDecisionOptions): Decision {
   const unsigned: Decision = { ...options.decision, state: "ATTESTED" };
   const payload = decisionAttestationPayload(unsigned);
   const proof = createProof(payload, "hacp:decision-attestation", options.signer);
+
+  return {
+    ...unsigned,
+    attestation: {
+      method: options.method ?? "DIRECT_CONFIRMATION",
+      assuranceLevel: options.assuranceLevel ?? "HACP_L2",
+      attestedAt: proof.createdAt,
+      proof,
+    },
+  };
+}
+
+export async function attestDecisionWithProvider(
+  options: AttestDecisionWithProviderOptions,
+): Promise<Decision> {
+  invariant(
+    options.decision.state === "PROPOSED",
+    "DECISION_NOT_ATTESTED",
+    "Only a proposed Decision can be attested",
+  );
+
+  const unsigned: Decision = { ...options.decision, state: "ATTESTED" };
+  const proof = await createProofWithProvider(
+    decisionAttestationPayload(unsigned),
+    "hacp:decision-attestation",
+    options.signer,
+  );
 
   return {
     ...unsigned,

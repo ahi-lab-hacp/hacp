@@ -21,3 +21,31 @@ import {
 Read the repository [README](../../README.md) for the end-to-end workflow and [security policy](../../SECURITY.md) before integrating consequential actions.
 
 The included in-memory stores are test and development utilities. Production systems need durable, atomic implementations.
+
+## Isolated signing
+
+The synchronous helpers accept local private keys for tests and small trusted
+processes. Production systems should use the asynchronous provider helpers so
+KMS, HSM, passkey, or authority-service keys never enter the Agent runtime:
+
+```ts
+const decision = await attestDecisionWithProvider({
+  decision: proposedDecision,
+  signer: {
+    verificationMethod: "did:web:example.com:alice#authority-1",
+    sign: (canonicalBytes, context) => kms.sign(canonicalBytes, context),
+  },
+});
+```
+
+Provider variants are available for Decision attestation, Mandate issuance,
+ActionEnvelope creation, revocation, delegated Mandates, and Receipt signing.
+The provider must enforce which HACP purpose and identity its key may sign; do
+not expose a general-purpose signing endpoint to the model.
+
+## Verified revocation
+
+`VerifiedRevocationResolver` checks the revocation proof, proof-to-issuer
+authorization, object reference, effective time, and deployment-defined issuer
+authority. Strict mode is the default and fails closed when a registry returns
+an invalid record.

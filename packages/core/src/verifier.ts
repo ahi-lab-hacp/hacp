@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { actionEnvelopePayload } from "./action.js";
 import { digestObject } from "./canonicalize.js";
 import { evaluateConstraints, isConstraintSetNarrower } from "./constraints.js";
-import { createProof, verifyProof, withoutProof } from "./crypto.js";
+import { createProofAsync, verifyProof, withoutProof } from "./crypto.js";
 import { decisionAttestationPayload, verifyDecisionAttestation } from "./decision.js";
 import { HacpError } from "./errors.js";
 import { evaluateIntent } from "./intent.js";
@@ -12,8 +12,8 @@ import {
   type Decision,
   HACP_VERSION,
   type Mandate,
+  type ProofSigner,
   type Receipt,
-  type Signer,
   type Verdict,
   type VerificationOptions,
   type VerificationResult,
@@ -24,13 +24,13 @@ interface ReceiptInput {
   mandateRef: string;
   policyVersion: string;
   reasonCodes: string[];
-  signer: Signer;
+  signer: ProofSigner;
   verifier: string;
   verdict: Verdict;
   now: Date;
 }
 
-function createReceipt(input: ReceiptInput): Receipt {
+async function createReceipt(input: ReceiptInput): Promise<Receipt> {
   const unsigned: Omit<Receipt, "proof"> = {
     hacpVersion: HACP_VERSION,
     type: "receipt",
@@ -43,7 +43,7 @@ function createReceipt(input: ReceiptInput): Receipt {
     policyVersion: input.policyVersion,
     evaluatedAt: input.now.toISOString(),
   };
-  return { ...unsigned, proof: createProof(unsigned, "hacp:receipt", input.signer) };
+  return { ...unsigned, proof: await createProofAsync(unsigned, "hacp:receipt", input.signer) };
 }
 
 export function receiptPayload(receipt: Receipt): Omit<Receipt, "proof"> {
@@ -156,15 +156,15 @@ async function verifyMandateChain(
   return reasons;
 }
 
-function resultWithReceipt(
+async function resultWithReceipt(
   options: VerificationOptions,
   now: Date,
   verdict: Verdict,
   reasonCodes: string[],
   context?: { action: Action; decision: Decision; mandateChain: Mandate[] },
-): VerificationResult {
+): Promise<VerificationResult> {
   return {
-    receipt: createReceipt({
+    receipt: await createReceipt({
       actionDigest: digestObject(options.actionEnvelope),
       mandateRef: options.actionEnvelope.mandateRef,
       policyVersion: options.policy.version,

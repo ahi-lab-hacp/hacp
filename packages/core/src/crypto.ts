@@ -8,7 +8,14 @@ import {
 } from "node:crypto";
 import { canonicalBytes } from "./canonicalize.js";
 import { HacpError } from "./errors.js";
-import type { KeyMaterial, KeyResolver, Proof, Signer } from "./types.js";
+import type {
+  KeyMaterial,
+  KeyResolver,
+  Proof,
+  ProofSigner,
+  Signer,
+  SigningProvider,
+} from "./types.js";
 
 interface ProofOptions {
   type: Proof["type"];
@@ -41,6 +48,14 @@ function signingPayload(payload: unknown, purpose: string, options: ProofOptions
   });
 }
 
+function proofOptions(signer: Pick<ProofSigner, "verificationMethod" | "now">): ProofOptions {
+  return {
+    type: "Ed25519Signature2020",
+    verificationMethod: signer.verificationMethod,
+    createdAt: (signer.now?.() ?? new Date()).toISOString(),
+  };
+}
+
 export function generateEd25519KeyPair(): { privateKey: string; publicKey: string } {
   const { privateKey, publicKey } = generateKeyPairSync("ed25519");
   return {
@@ -50,17 +65,43 @@ export function generateEd25519KeyPair(): { privateKey: string; publicKey: strin
 }
 
 export function createProof(payload: unknown, purpose: string, signer: Signer): Proof {
-  const options: ProofOptions = {
-    type: "Ed25519Signature2020",
-    verificationMethod: signer.verificationMethod,
-    createdAt: (signer.now?.() ?? new Date()).toISOString(),
-  };
+  const options = proofOptions(signer);
   const signature = nodeSign(
     null,
     signingPayload(payload, purpose, options),
     toPrivateKey(signer.privateKey),
   );
   return { ...options, proofValue: signature.toString("base64url") };
+}
+
+/** Creates a proof without requiring private-key material in this process. */
+export async function createProofWithProvider(
+  payload: unknown,
+  purpose: string,
+  provider: SigningProvider,
+): Promise<Proof> {
+  const options = proofOptions(provider);
+  const signature = await provider.sign(signingPayload(payload, purpose, options), {
+    createdAt: options.createdAt,
+    purpose,
+  });
+  if (!(signature instanceof Uint8Array) || signature.byteLength !== 64) {
+    throw new HacpError(
+      "INVALID_PROOF",
+      "Signing provider must return a 64-byte Ed25519 signature",
+    );
+  }
+  return { ...options, proofValue: Buffer.from(signature).toString("base64url") };
+}
+
+export async function createProofAsync(
+  payload: unknown,
+  purpose: string,
+  signer: ProofSigner,
+): Promise<Proof> {
+  return "privateKey" in signer
+    ? createProof(payload, purpose, signer)
+    : createProofWithProvider(payload, purpose, signer);
 }
 
 export async function verifyProof(

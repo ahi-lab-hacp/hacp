@@ -169,6 +169,11 @@ creation time, and proof. Revocation affects future authorization decisions.
 Historical audit MUST evaluate authority against the time and policy relevant to
 the event being audited.
 
+A Receiver MUST verify the Revocation proof, authorize its verification method
+for the named issuer, and determine that the issuer is permitted to revoke the
+referenced object. Merely finding an object identifier in an unverified
+revocation list is insufficient.
+
 ## 6. Evidence and privacy
 
 Evidence references contain a digest, media type, disclosure mode, and optional
@@ -313,6 +318,8 @@ their configured issuer and key policies.
 Deployments MUST:
 
 - protect private keys with managed key storage appropriate to the risk;
+- keep human and institutional authority keys outside the Agent and model
+  runtime, using a narrowly scoped signing boundary;
 - separate authority, Agent, and Receipt signing keys when roles differ;
 - authenticate Agents independently of HACP bodies;
 - validate proof-to-identity authorization, not signatures alone;

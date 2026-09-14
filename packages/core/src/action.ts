@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createProof, withoutProof } from "./crypto.js";
+import { createProof, createProofWithProvider, withoutProof } from "./crypto.js";
 import { invariant } from "./errors.js";
 import {
   type Action,
@@ -7,6 +7,7 @@ import {
   HACP_VERSION,
   type Mandate,
   type Signer,
+  type SigningProvider,
 } from "./types.js";
 
 export interface CreateActionEnvelopeOptions {
@@ -18,7 +19,15 @@ export interface CreateActionEnvelopeOptions {
   signer: Signer;
 }
 
-export function createActionEnvelope(options: CreateActionEnvelopeOptions): ActionEnvelope {
+export interface CreateActionEnvelopeWithProviderOptions
+  extends Omit<CreateActionEnvelopeOptions, "signer"> {
+  signer: SigningProvider;
+}
+
+function createUnsignedActionEnvelope(
+  options: Omit<CreateActionEnvelopeOptions, "signer">,
+  now: Date,
+): Omit<ActionEnvelope, "proof"> {
   invariant(
     options.agent === options.mandate.subject,
     "AGENT_AUTHENTICATION_FAILED",
@@ -30,7 +39,7 @@ export function createActionEnvelope(options: CreateActionEnvelopeOptions): Acti
     "Action type is not granted by the Mandate",
   );
 
-  const unsigned: Omit<ActionEnvelope, "proof"> = {
+  return {
     hacpVersion: HACP_VERSION,
     type: "action-envelope",
     id: options.id ?? `act_${randomUUID()}`,
@@ -38,9 +47,23 @@ export function createActionEnvelope(options: CreateActionEnvelopeOptions): Acti
     agent: options.agent,
     action: options.action,
     nonce: options.nonce ?? randomUUID(),
-    createdAt: (options.signer.now?.() ?? new Date()).toISOString(),
+    createdAt: now.toISOString(),
   };
+}
+
+export function createActionEnvelope(options: CreateActionEnvelopeOptions): ActionEnvelope {
+  const unsigned = createUnsignedActionEnvelope(options, options.signer.now?.() ?? new Date());
   return { ...unsigned, proof: createProof(unsigned, "hacp:action", options.signer) };
+}
+
+export async function createActionEnvelopeWithProvider(
+  options: CreateActionEnvelopeWithProviderOptions,
+): Promise<ActionEnvelope> {
+  const unsigned = createUnsignedActionEnvelope(options, options.signer.now?.() ?? new Date());
+  return {
+    ...unsigned,
+    proof: await createProofWithProvider(unsigned, "hacp:action", options.signer),
+  };
 }
 
 export function actionEnvelopePayload(envelope: ActionEnvelope): Omit<ActionEnvelope, "proof"> {

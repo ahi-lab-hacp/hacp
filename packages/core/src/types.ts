@@ -139,6 +139,21 @@ export interface Signer {
   now?: () => Date;
 }
 
+/**
+ * Signing boundary for KMS, HSM, passkey, or separately isolated authority
+ * services. The private key never enters the HACP caller process.
+ */
+export interface SigningProvider {
+  verificationMethod: string;
+  sign(
+    bytes: Uint8Array,
+    context: { createdAt: string; purpose: string },
+  ): Uint8Array | Promise<Uint8Array>;
+  now?: () => Date;
+}
+
+export type ProofSigner = Signer | SigningProvider;
+
 export type KeyResolver = (verificationMethod: string) => KeyMaterial | Promise<KeyMaterial>;
 export type VerificationMethodAuthorizer = (
   identity: string,
@@ -220,7 +235,7 @@ export interface VerificationOptions {
   revocations: RevocationResolver;
   nonces: NonceStore;
   policy: VerificationPolicy;
-  receiptSigner: Signer;
+  receiptSigner: ProofSigner;
   verifier: string;
   now?: () => Date;
   clockSkewMs?: number;

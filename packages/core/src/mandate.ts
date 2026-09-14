@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { isConstraintSetNarrower } from "./constraints.js";
-import { createProof, withoutProof } from "./crypto.js";
+import { createProof, createProofAsync, createProofWithProvider, withoutProof } from "./crypto.js";
 import { invariant } from "./errors.js";
 import {
   type ConstraintNarrowing,
@@ -8,7 +8,9 @@ import {
   type Decision,
   HACP_VERSION,
   type Mandate,
+  type ProofSigner,
   type Signer,
+  type SigningProvider,
 } from "./types.js";
 
 export interface IssueMandateOptions {
@@ -24,6 +26,10 @@ export interface IssueMandateOptions {
   signer: Signer;
   subject: string;
   validFrom?: string;
+}
+
+export interface IssueMandateWithProviderOptions extends Omit<IssueMandateOptions, "signer"> {
+  signer: SigningProvider;
 }
 
 function assertMandateShape(mandate: Omit<Mandate, "proof">): void {
@@ -45,7 +51,10 @@ function assertMandateShape(mandate: Omit<Mandate, "proof">): void {
   );
 }
 
-export function issueMandate(options: IssueMandateOptions): Mandate {
+function createUnsignedRootMandate(
+  options: Omit<IssueMandateOptions, "signer">,
+  now: Date,
+): Omit<Mandate, "proof"> {
   invariant(
     options.decision.state === "ATTESTED" && options.decision.attestation,
     "DECISION_NOT_ATTESTED",
@@ -56,7 +65,6 @@ export function issueMandate(options: IssueMandateOptions): Mandate {
     "SCOPE_ESCALATION",
     "Mandate permissions must match the controlling Decision intent type",
   );
-  const now = options.signer.now?.() ?? new Date();
   const unsigned: Omit<Mandate, "proof"> = {
     hacpVersion: HACP_VERSION,
     type: "mandate",
@@ -78,7 +86,22 @@ export function issueMandate(options: IssueMandateOptions): Mandate {
     "SCOPE_ESCALATION",
     "Mandate constraints must preserve or narrow the controlling Decision",
   );
+  return unsigned;
+}
+
+export function issueMandate(options: IssueMandateOptions): Mandate {
+  const unsigned = createUnsignedRootMandate(options, options.signer.now?.() ?? new Date());
   return { ...unsigned, proof: createProof(unsigned, "hacp:mandate", options.signer) };
+}
+
+export async function issueMandateWithProvider(
+  options: IssueMandateWithProviderOptions,
+): Promise<Mandate> {
+  const unsigned = createUnsignedRootMandate(options, options.signer.now?.() ?? new Date());
+  return {
+    ...unsigned,
+    proof: await createProofWithProvider(unsigned, "hacp:mandate", options.signer),
+  };
 }
 
 export interface DelegateMandateOptions {
@@ -89,7 +112,7 @@ export interface DelegateMandateOptions {
   notAfter: string;
   parent: Mandate;
   permissions: string[];
-  signer: Signer;
+  signer: ProofSigner;
   subject: string;
   validFrom?: string;
   isNarrower?: ConstraintNarrowing;
@@ -138,7 +161,7 @@ export async function delegateMandate(options: DelegateMandateOptions): Promise<
     nonce: options.nonce ?? randomUUID(),
   };
   assertMandateShape(unsigned);
-  return { ...unsigned, proof: createProof(unsigned, "hacp:mandate", options.signer) };
+  return { ...unsigned, proof: await createProofAsync(unsigned, "hacp:mandate", options.signer) };
 }
 
 export function mandatePayload(mandate: Mandate): Omit<Mandate, "proof"> {
