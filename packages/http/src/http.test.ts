@@ -10,10 +10,13 @@ import {
   type Signer,
 } from "@ahi-lab-hacp/core";
 import {
+  createHacpDiscoveryDocument,
+  createHacpDiscoveryResponse,
   createHacpHandler,
   createHacpRequest,
   createVerificationResponse,
   parseActionEnvelope,
+  requireHacp,
   verifyHacpRequest,
 } from "./index.js";
 
@@ -87,6 +90,33 @@ function verificationFixture() {
 }
 
 describe("HTTP binding", () => {
+  it("publishes only explicit public discovery key fields", async () => {
+    const document = createHacpDiscoveryDocument({
+      issuer: "https://authority.example/hacp",
+      verifier: "https://api.example/hacp/verifier",
+      audience: "https://api.example/bookings",
+      verificationMethods: [
+        {
+          id: "https://authority.example/.well-known/hacp.json#key-1",
+          controller: "https://authority.example/hacp",
+          algorithm: "Ed25519",
+          publicKeyPem: "PUBLIC KEY",
+          privateKey: "MUST NOT LEAK",
+        } as Parameters<typeof createHacpDiscoveryDocument>[0]["verificationMethods"][number],
+      ],
+      actions: [{ action: "flight.purchase", assuranceLevels: ["HACP_L2", "HACP_L3"] }],
+    });
+    const response = createHacpDiscoveryResponse(document);
+    const body = await response.text();
+
+    expect(response.headers.get("HACP-Version")).toBe("0.1");
+    expect(response.headers.get("content-type")).toContain("application/hacp+json");
+    expect(document.audience).toBe("https://api.example");
+    expect(document.algorithms).toEqual(["Ed25519"]);
+    expect(body).toContain("PUBLIC KEY");
+    expect(body).not.toContain("MUST NOT LEAK");
+  });
+
   it("encodes and parses an action envelope", async () => {
     const envelope = {
       hacpVersion: HACP_VERSION,
@@ -188,5 +218,25 @@ describe("HTTP binding", () => {
     );
     expect(response.status).toBe(403);
     expect(response.headers.get("content-type")).toContain("application/hacp+json");
+  });
+
+  it("keeps the protected operation behind the default-deny receiver boundary", async () => {
+    const fixture = verificationFixture();
+    let effects = 0;
+    const handler = requireHacp({
+      ...fixture.options,
+      authenticateAgent: () => fixture.agent,
+      onAllow: () => {
+        effects += 1;
+        return new Response("effect completed");
+      },
+    });
+
+    const response = await handler(
+      createHacpRequest("https://api.example/action", { envelope: fixture.envelope }),
+    );
+
+    expect(response.status).toBe(403);
+    expect(effects).toBe(0);
   });
 });

@@ -2,6 +2,7 @@ import {
   HACP_VERSION,
   HacpError,
   type ActionEnvelope,
+  type AssuranceLevel,
   type VerificationOptions,
   type VerificationResult,
   verifyAction,
@@ -9,6 +10,71 @@ import {
 
 export const HACP_MEDIA_TYPE = "application/hacp+json";
 export const HACP_VERSION_HEADER = "HACP-Version";
+
+export type HacpPublicKeyMaterial =
+  | { publicKeyJwk: JsonWebKey; publicKeyPem?: never }
+  | { publicKeyJwk?: never; publicKeyPem: string };
+
+export type HacpVerificationMethod = HacpPublicKeyMaterial & {
+  algorithm: "Ed25519";
+  controller: string;
+  id: string;
+};
+
+export interface HacpActionRequirement {
+  action: string;
+  assuranceLevels: AssuranceLevel[];
+}
+
+export interface HacpDiscoveryDocument {
+  actions?: HacpActionRequirement[];
+  algorithms: string[];
+  audience: string;
+  hacpVersion: typeof HACP_VERSION;
+  issuer: string;
+  verificationMethods: HacpVerificationMethod[];
+  verifier: string;
+}
+
+export type CreateHacpDiscoveryOptions = Omit<HacpDiscoveryDocument, "algorithms" | "hacpVersion">;
+
+/**
+ * Creates the public metadata a receiver publishes at `/.well-known/hacp.json`.
+ * Only explicitly selected public-key fields are copied to prevent accidental
+ * serialization of private key material from key-management objects.
+ */
+export function createHacpDiscoveryDocument(
+  options: CreateHacpDiscoveryOptions,
+): HacpDiscoveryDocument {
+  const verificationMethods = options.verificationMethods.map((method) => ({
+    id: method.id,
+    controller: method.controller,
+    algorithm: method.algorithm,
+    ...(method.publicKeyJwk
+      ? { publicKeyJwk: method.publicKeyJwk }
+      : { publicKeyPem: method.publicKeyPem }),
+  }));
+
+  return {
+    hacpVersion: HACP_VERSION,
+    issuer: options.issuer,
+    verifier: options.verifier,
+    audience: new URL(options.audience).origin,
+    algorithms: [...new Set(verificationMethods.map((method) => method.algorithm))].sort(),
+    verificationMethods,
+    ...(options.actions ? { actions: options.actions } : {}),
+  };
+}
+
+export function createHacpDiscoveryResponse(document: HacpDiscoveryDocument): Response {
+  return Response.json(document, {
+    headers: {
+      "cache-control": "public, max-age=300",
+      "content-type": HACP_MEDIA_TYPE,
+      [HACP_VERSION_HEADER]: HACP_VERSION,
+    },
+  });
+}
 
 export interface CreateHacpRequestOptions extends Omit<RequestInit, "body"> {
   envelope: ActionEnvelope;
@@ -115,4 +181,14 @@ export function createHacpHandler(
       );
     }
   };
+}
+
+/**
+ * Creates a default-deny boundary for a consequential receiver operation.
+ * The protected callback is invoked only after the complete HACP chain passes.
+ */
+export function requireHacp(
+  options: CreateHacpHandlerOptions,
+): (request: Request) => Promise<Response> {
+  return createHacpHandler(options);
 }
