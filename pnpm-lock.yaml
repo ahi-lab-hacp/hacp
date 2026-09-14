@@ -45,6 +45,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/http
 
+  examples/ticket-booking:
+    dependencies:
+      '@ahi-lab-hacp/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@ahi-lab-hacp/http':
+        specifier: workspace:*
+        version: link:../../packages/http
+
   packages/cli:
     dependencies:
       '@ahi-lab-hacp/core':

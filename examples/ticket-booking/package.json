@@ -1,0 +1,16 @@
+{
+  "name": "@hacp-example/ticket-booking",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ahi-lab-hacp/core": "workspace:*",
+    "@ahi-lab-hacp/http": "workspace:*"
+  }
+}
