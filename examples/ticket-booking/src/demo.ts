@@ -8,14 +8,44 @@ import {
   issueMandate,
   verifyReceipt,
   type ActionEnvelope,
+  type Decision,
   type DecisionExtractor,
+  type Mandate,
   type Receipt,
   type Signer,
 } from "@ahi-lab-hacp/core";
-import { createHacpHandler, createHacpRequest } from "@ahi-lab-hacp/http";
+import {
+  createHacpDiscoveryDocument,
+  createHacpHandler,
+  createHacpRequest,
+  type HacpDiscoveryDocument,
+} from "@ahi-lab-hacp/http";
+
+export interface DemoKeyPair {
+  privateKey: string;
+  publicKey: string;
+}
+
+export interface DemoKeySet {
+  agent: DemoKeyPair;
+  human: DemoKeyPair;
+  verifier: DemoKeyPair;
+}
+
+export interface TicketBookingDemoOptions {
+  agent?: string;
+  human?: string;
+  keys?: DemoKeySet;
+  organization?: string;
+  ticketApi?: string;
+  verifier?: string;
+}
 
 export interface DemoOutcome {
+  authenticatedAs: string;
+  envelope: ActionEnvelope;
   name: string;
+  receipt: Receipt;
   status: number;
   verdict: Receipt["verdict"];
   reasonCodes: string[];
@@ -23,53 +53,71 @@ export interface DemoOutcome {
 }
 
 export interface TicketBookingDemo {
-  decisionId: string;
-  mandateId: string;
+  decision: Decision;
+  discovery: HacpDiscoveryDocument;
+  mandate: Mandate;
   principal: string;
   agent: string;
   outcomes: DemoOutcome[];
 }
 
-const ticketApi = "https://tickets.example";
-const human = "did:web:acme.example:users:alice";
-const organization = "did:web:acme.example";
-const agent = "did:web:agents.acme.example:travel";
-const verifier = "did:web:tickets.example:hacp";
-
-const extractor: DecisionExtractor = {
-  extract: ({ evidence }) => ({
-    intent: {
-      type: "flight.purchase",
-      statement: "Book Alice a Friday afternoon flight to New York for at most USD 600.",
-      parameters: { destination: "NYC", departureWindow: "Friday afternoon" },
-    },
-    constraints: {
-      destination: ["NYC"],
-      maxAmount: { currency: "USD", value: "600.00" },
-      allowedTargets: [ticketApi],
-    },
-    fieldSources: [
-      { path: "/intent", basis: "ASSERTED", evidenceDigest: evidence.digest },
-      { path: "/constraints/destination", basis: "ASSERTED", evidenceDigest: evidence.digest },
-      { path: "/constraints/maxAmount", basis: "ASSERTED", evidenceDigest: evidence.digest },
-    ],
-  }),
+const defaults = {
+  ticketApi: "https://tickets.example",
+  human: "did:web:acme.example:users:alice",
+  organization: "did:web:acme.example",
+  agent: "did:web:agents.acme.example:travel",
+  verifier: "did:web:tickets.example:hacp",
 };
 
-export async function runTicketBookingDemo(): Promise<TicketBookingDemo> {
-  const humanKeys = generateEd25519KeyPair();
-  const agentKeys = generateEd25519KeyPair();
-  const verifierKeys = generateEd25519KeyPair();
+function createExtractor(ticketApi: string): DecisionExtractor {
+  return {
+    extract: ({ evidence }) => ({
+      intent: {
+        type: "flight.purchase",
+        statement: "Book Alice a Friday afternoon flight to New York for at most USD 600.",
+        parameters: { destination: "NYC", departureWindow: "Friday afternoon" },
+      },
+      constraints: {
+        destination: ["NYC"],
+        maxAmount: { currency: "USD", value: "600.00" },
+        allowedTargets: [ticketApi],
+      },
+      fieldSources: [
+        { path: "/intent", basis: "ASSERTED", evidenceDigest: evidence.digest },
+        { path: "/constraints/destination", basis: "ASSERTED", evidenceDigest: evidence.digest },
+        { path: "/constraints/maxAmount", basis: "ASSERTED", evidenceDigest: evidence.digest },
+      ],
+    }),
+  };
+}
+
+export function createTicketBookingDemoKeys(): DemoKeySet {
+  return {
+    human: generateEd25519KeyPair(),
+    agent: generateEd25519KeyPair(),
+    verifier: generateEd25519KeyPair(),
+  };
+}
+
+export async function runTicketBookingDemo(
+  options: TicketBookingDemoOptions = {},
+): Promise<TicketBookingDemo> {
+  const ticketApi = options.ticketApi ?? defaults.ticketApi;
+  const human = options.human ?? defaults.human;
+  const organization = options.organization ?? defaults.organization;
+  const agent = options.agent ?? defaults.agent;
+  const verifier = options.verifier ?? defaults.verifier;
+  const keys = options.keys ?? createTicketBookingDemoKeys();
   const humanSigner: Signer = {
-    privateKey: humanKeys.privateKey,
+    privateKey: keys.human.privateKey,
     verificationMethod: `${human}#hacp-1`,
   };
   const agentSigner: Signer = {
-    privateKey: agentKeys.privateKey,
+    privateKey: keys.agent.privateKey,
     verificationMethod: `${agent}#hacp-1`,
   };
   const receiptSigner: Signer = {
-    privateKey: verifierKeys.privateKey,
+    privateKey: keys.verifier.privateKey,
     verificationMethod: `${verifier}#hacp-1`,
   };
 
@@ -77,7 +125,7 @@ export async function runTicketBookingDemo(): Promise<TicketBookingDemo> {
   const proposal = await extractDecision({
     communication: "Book me a Friday afternoon flight to NYC for no more than $600.",
     principal: { id: human, type: "HUMAN", organization },
-    extractor,
+    extractor: createExtractor(ticketApi),
     source: "urn:demo:chat:alice:message-1",
   });
 
@@ -98,9 +146,36 @@ export async function runTicketBookingDemo(): Promise<TicketBookingDemo> {
   const store = new InMemoryHacpStore();
   store.putDecision(decision);
   store.putMandate(mandate);
-  store.putKey(humanSigner.verificationMethod, humanKeys.publicKey);
-  store.putKey(agentSigner.verificationMethod, agentKeys.publicKey);
-  store.putKey(receiptSigner.verificationMethod, verifierKeys.publicKey);
+  store.putKey(humanSigner.verificationMethod, keys.human.publicKey);
+  store.putKey(agentSigner.verificationMethod, keys.agent.publicKey);
+  store.putKey(receiptSigner.verificationMethod, keys.verifier.publicKey);
+
+  const discovery = createHacpDiscoveryDocument({
+    issuer: organization,
+    verifier,
+    audience: ticketApi,
+    verificationMethods: [
+      {
+        id: humanSigner.verificationMethod,
+        controller: human,
+        algorithm: "Ed25519",
+        publicKeyPem: keys.human.publicKey,
+      },
+      {
+        id: agentSigner.verificationMethod,
+        controller: agent,
+        algorithm: "Ed25519",
+        publicKeyPem: keys.agent.publicKey,
+      },
+      {
+        id: receiptSigner.verificationMethod,
+        controller: verifier,
+        algorithm: "Ed25519",
+        publicKeyPem: keys.verifier.publicKey,
+      },
+    ],
+    actions: [{ action: "flight.purchase", assuranceLevels: ["HACP_L2"] }],
+  });
 
   // 3. The ticket server authenticates the workload independently, then verifies HACP.
   const handler = createHacpHandler({
@@ -158,7 +233,10 @@ export async function runTicketBookingDemo(): Promise<TicketBookingDemo> {
     );
     const body = (await response.json()) as { receipt: Receipt };
     return {
+      authenticatedAs,
+      envelope,
       name,
+      receipt: body.receipt,
       status: response.status,
       verdict: body.receipt.verdict,
       reasonCodes: body.receipt.reasonCodes,
@@ -180,8 +258,9 @@ export async function runTicketBookingDemo(): Promise<TicketBookingDemo> {
   const replay = await send("same action replayed", validEnvelope);
 
   return {
-    decisionId: decision.id,
-    mandateId: mandate.id,
+    decision,
+    discovery,
+    mandate,
     principal: human,
     agent,
     outcomes: [wrongIdentity, overBudget, tampered, allowed, replay],

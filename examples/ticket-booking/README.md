@@ -43,6 +43,26 @@ The output shows five requests:
 
 Every response contains a verifier-signed Receipt, including denials. The example validates every Receipt signature before displaying the result.
 
+## Run the interactive server
+
+```bash
+pnpm --filter @hacp-example/ticket-booking serve
+```
+
+Open `http://localhost:8787`. The page runs all five cases and lets you inspect
+the complete signed Decision, Mandate, Action Envelopes, Receipts, and public
+discovery document. The server exposes:
+
+- `GET /` — interactive demonstration;
+- `POST /api/demo` — machine-readable, complete signed run;
+- `GET /.well-known/hacp.json` — public identities, keys, algorithms, and accepted action;
+- `GET /healthz` — deployment health check.
+
+The process creates one independent key pair for the human, agent, and ticket
+receiver at startup. Only public material is included in discovery and demo
+responses. Restarting the reference server intentionally rotates these
+ephemeral demonstration keys.
+
 ## Follow the implementation
 
 Read [`src/demo.ts`](./src/demo.ts) in numbered sections:
@@ -53,4 +73,4 @@ Read [`src/demo.ts`](./src/demo.ts) in numbered sections:
 4. `createHacpRequest()` carries it over HTTP alongside independent authentication.
 5. `createHacpHandler()` verifies the chain and runs the ticket site's local policy.
 
-The example uses in-memory keys and stores for clarity. Production systems should use managed signing keys, durable object resolution, atomic shared nonce storage, revocation checks, and real workload authentication.
+The example uses in-memory keys and stores for clarity. Production systems should use managed signing keys, durable object resolution, atomic shared nonce storage, revocation checks, and real workload authentication. No real booking or external side effect occurs in this demonstration.

@@ -13,5 +13,11 @@ describe("ticket-booking example", () => {
     ]);
     expect(demo.outcomes.every((outcome) => outcome.receiptSignatureValid)).toBe(true);
     expect(demo.outcomes.at(-1)?.reasonCodes).toContain("REPLAY_DETECTED");
+    expect(demo.discovery.verificationMethods).toHaveLength(3);
+    expect(demo.decision.attestation?.assuranceLevel).toBe("HACP_L2");
+    expect(demo.mandate.decisionRef).toBe(demo.decision.id);
+    expect(demo.outcomes.every((outcome) => outcome.receipt.mandateRef === demo.mandate.id)).toBe(
+      true,
+    );
   });
 });

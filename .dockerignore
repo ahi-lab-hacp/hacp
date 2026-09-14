@@ -1,0 +1,6 @@
+.git
+.github
+.changeset
+**/dist
+**/node_modules
+**/coverage
