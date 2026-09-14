@@ -59,7 +59,7 @@ const server = createServer(async (request, response) => {
       return;
     }
 
-    if (request.method === "GET" && url.pathname === "/healthz") {
+    if (request.method === "GET" && url.pathname === "/api/health") {
       await sendFetchResponse(Response.json({ status: "ok", hacpVersion: "0.1" }), response);
       return;
     }

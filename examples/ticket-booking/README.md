@@ -56,7 +56,7 @@ discovery document. The server exposes:
 - `GET /` — interactive demonstration;
 - `POST /api/demo` — machine-readable, complete signed run;
 - `GET /.well-known/hacp.json` — public identities, keys, algorithms, and accepted action;
-- `GET /healthz` — deployment health check.
+- `GET /api/health` — deployment health check.
 
 The process creates one independent key pair for the human, agent, and ticket
 receiver at startup. Only public material is included in discovery and demo
