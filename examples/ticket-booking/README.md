@@ -1,5 +1,8 @@
 # HACP ticket-booking demo
 
+[Run the live interoperability demonstration](https://hacp-ticket-demo-dmy3rfwd7q-uw.a.run.app) ·
+[Inspect its public HACP discovery document](https://hacp-ticket-demo-dmy3rfwd7q-uw.a.run.app/.well-known/hacp.json)
+
 This runnable example shows why authentication alone is insufficient for agent traffic. A ticket API can authenticate a travel agent, but it still needs to know which person authorized the booking, the price and destination limits they approved, and whether the request was modified or replayed.
 
 The demo uses the public APIs from `@ahi-lab-hacp/core` and `@ahi-lab-hacp/http`:

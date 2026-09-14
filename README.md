@@ -44,6 +44,8 @@ Today, a website usually sees an agent as just another HTTP client. Consider an 
 
 HACP gives the legitimate request a verifiable chain: Alice's reviewed decision, the exact limits she approved, the identity of the agent she authorized, and the concrete booking action the agent proposes. The ticket website verifies that chain and applies its own policy before creating the reservation. It can accept a properly authorized booking, request human review when the evidence is insufficient, or deny an anonymous, altered, expired, replayed, or out-of-scope request. HACP does not ask the website to trust an agent's claim that its intentions are good; it gives the website evidence it can verify and control.
 
+[Run the live ticket-booking demonstration](https://hacp-ticket-demo-dmy3rfwd7q-uw.a.run.app) to compare a valid USD 542 booking with wrong-identity, over-budget, tampered, and replayed Agent requests. Every case returns a signed Receipt, and the complete protocol objects and public keys are inspectable.
+
 ## The trust boundary
 
 Natural-language extraction is probabilistic. Authorization must not be.
