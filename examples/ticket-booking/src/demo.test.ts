@@ -17,6 +17,7 @@ describe("ticket-booking example", () => {
     expect(demo.discovery.verificationMethods).toHaveLength(3);
     expect(demo.decision.attestation?.assuranceLevel).toBe("HACP_L2");
     expect(demo.mandate.decisionRef).toBe(demo.decision.id);
+    expect(demo.communication).toContain("no more than $600");
     expect(demo.outcomes.every((outcome) => outcome.receipt.mandateRef === demo.mandate.id)).toBe(
       true,
     );

@@ -53,9 +53,11 @@ Every response contains a verifier-signed Receipt, including denials. The exampl
 pnpm --filter @hacp-example/ticket-booking serve
 ```
 
-Open `http://localhost:8787`. The page runs all six cases and lets you inspect
-the complete signed Decision, Mandate, Action Envelopes, Receipts, and public
-discovery document. The server exposes:
+Open `http://localhost:8787`. The page begins with the valid booking and lets
+you switch between all six cases. Its under-the-hood view follows one request
+through seven verification gates and exposes the natural-language source,
+signed Decision, delegated Mandate, authenticated HTTP request, server check
+report, and signed Receipt. The server exposes:
 
 - `GET /` — interactive demonstration;
 - `POST /api/demo` — machine-readable, complete signed run;

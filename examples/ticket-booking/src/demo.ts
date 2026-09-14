@@ -56,6 +56,7 @@ export interface TicketBookingDemo {
   decision: Decision;
   discovery: HacpDiscoveryDocument;
   mandate: Mandate;
+  communication: string;
   principal: string;
   agent: string;
   outcomes: DemoOutcome[];
@@ -109,6 +110,7 @@ export async function runTicketBookingDemo(
   const agent = options.agent ?? defaults.agent;
   const verifier = options.verifier ?? defaults.verifier;
   const keys = options.keys ?? createTicketBookingDemoKeys();
+  const communication = "Book me a Friday afternoon flight to NYC for no more than $600.";
   const humanSigner: Signer = {
     privateKey: keys.human.privateKey,
     verificationMethod: `${human}#hacp-1`,
@@ -124,7 +126,7 @@ export async function runTicketBookingDemo(
 
   // 1. Natural language becomes a proposal. It cannot authorize an action yet.
   const proposal = await extractDecision({
-    communication: "Book me a Friday afternoon flight to NYC for no more than $600.",
+    communication,
     principal: { id: human, type: "HUMAN", organization },
     extractor: createExtractor(ticketApi),
     source: "urn:demo:chat:alice:message-1",
@@ -262,6 +264,7 @@ export async function runTicketBookingDemo(
   const replay = await send("same action replayed", validEnvelope);
 
   return {
+    communication,
     decision,
     discovery,
     mandate,
