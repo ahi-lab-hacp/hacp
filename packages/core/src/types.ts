@@ -155,9 +155,17 @@ export interface SigningProvider {
 export type ProofSigner = Signer | SigningProvider;
 
 export type KeyResolver = (verificationMethod: string) => KeyMaterial | Promise<KeyMaterial>;
+
+export interface VerificationMethodAuthorizationContext {
+  proofCreatedAt: string;
+  purpose: string;
+  verificationTime: Date;
+}
+
 export type VerificationMethodAuthorizer = (
   identity: string,
   verificationMethod: string,
+  context?: VerificationMethodAuthorizationContext,
 ) => boolean | Promise<boolean>;
 
 export interface DecisionExtraction {

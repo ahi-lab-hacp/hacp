@@ -36,16 +36,18 @@ const purchaseTicket = requireHacp({
   verifier: "https://tickets.example/hacp/verifier",
   receiptSigner,
   policy: ticketPolicy,
-  onAllow: ({ verification }) =>
-    createBooking(verification.action!, verification.receipt),
+  onAllow: ({ authentication, verification }) =>
+    createBooking(verification.action!, verification.receipt, authentication),
 });
 
 export default { fetch: purchaseTicket };
 ```
 
 This shape runs directly in Fetch-compatible runtimes. Framework adapters must
-derive `authenticatedAgent` from trusted transport authentication, never from
-the signed request body.
+return an Agent identity and authentication method derived from trusted
+transport authentication, never from the signed request body. Production
+integrations should return `{ id, method, credentialId? }`; returning a string
+is retained for compatibility and is labeled `APPLICATION_DEFINED`.
 
 ## Publish receiver discovery
 

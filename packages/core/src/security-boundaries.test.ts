@@ -1,15 +1,19 @@
 import { createPrivateKey, sign as nodeSign } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import {
+  attestApprovedDecisionWithProvider,
   attestDecisionWithProvider,
   createActionEnvelopeWithProvider,
   createRevocationWithProvider,
+  DurableNonceStore,
+  decisionDigest,
   extractDecision,
   generateEd25519KeyPair,
   InMemoryHacpStore,
   InMemoryNonceStore,
   issueMandateWithProvider,
   type SigningProvider,
+  VerificationMethodRegistry,
   VerifiedRevocationResolver,
   verifyAction,
 } from "./index.js";
@@ -28,6 +32,58 @@ function isolatedProvider(verificationMethod: string) {
 }
 
 describe("isolated signing boundary", () => {
+  it("requires a one-time approval bound to the exact proposed Decision", async () => {
+    const human = "did:web:example.test:users:alice";
+    const signing = isolatedProvider(`${human}#authority-1`);
+    const proposal = await extractDecision({
+      communication: "Book one ticket.",
+      principal: { id: human, type: "HUMAN" },
+      extractor: {
+        extract: ({ evidence }) => ({
+          intent: { type: "flight.purchase", statement: "Book one ticket." },
+          constraints: { maxQuantity: 1 },
+          fieldSources: [{ path: "/intent", basis: "ASSERTED", evidenceDigest: evidence.digest }],
+        }),
+      },
+      now: () => now,
+    });
+    let consumed = false;
+    const approvedDigest = decisionDigest(proposal);
+    const approvals = {
+      consume: (_id: string, expectedDigest: string) => {
+        if (consumed) throw new Error("Approval already consumed");
+        if (expectedDigest !== approvedDigest) throw new Error("Decision digest mismatch");
+        consumed = true;
+        return {
+          id: "approval-1",
+          principal: human,
+          decisionDigest: approvedDigest,
+          authenticationMethod: "PASSKEY",
+          approvedAt: "2026-09-14T11:59:00.000Z",
+          expiresAt: "2026-09-14T12:05:00.000Z",
+        };
+      },
+    };
+    const decision = await attestApprovedDecisionWithProvider({
+      approvalId: "approval-1",
+      approvals,
+      decision: proposal,
+      signer: signing.provider,
+      now: () => now,
+    });
+    expect(decision.state).toBe("ATTESTED");
+    expect(approvedDigest).toBeTruthy();
+    await expect(
+      attestApprovedDecisionWithProvider({
+        approvalId: "approval-1",
+        approvals,
+        decision: proposal,
+        signer: signing.provider,
+        now: () => now,
+      }),
+    ).rejects.toThrow("Approval already consumed");
+  });
+
   it("creates and verifies the full chain without exposing private keys to HACP", async () => {
     const human = "did:web:example.test:users:alice";
     const agent = "did:web:agents.example.test:travel";
@@ -137,5 +193,52 @@ describe("isolated signing boundary", () => {
     await expect(strictResolver.isRevoked("mandate_123", now)).rejects.toThrow(
       "Revocation proof or issuer is invalid",
     );
+  });
+});
+
+describe("production verification adapters", () => {
+  it("atomically accepts a nonce only once through durable persistence", async () => {
+    const consumed = new Set<string>();
+    const store = new DurableNonceStore({
+      consumeIfAbsent: ({ nonce, scope }) => {
+        const key = `${scope}|${nonce}`;
+        if (consumed.has(key)) return false;
+        consumed.add(key);
+        return true;
+      },
+    });
+
+    const results = await Promise.all([
+      store.consume("tickets|agent", "nonce-1", new Date("2026-09-15T00:00:00.000Z")),
+      store.consume("tickets|agent", "nonce-1", new Date("2026-09-15T00:00:00.000Z")),
+    ]);
+    expect(results.sort()).toEqual([false, true]);
+  });
+
+  it("supports retired historical keys while rejecting compromised keys", async () => {
+    const identity = "did:web:agents.example.test:travel";
+    const signing = isolatedProvider(`${identity}#key-2026-01`);
+    const baseRecord = {
+      id: signing.provider.verificationMethod,
+      controller: identity,
+      publicKey: signing.publicKey,
+      activatedAt: "2026-01-01T00:00:00.000Z",
+      retiredAt: "2026-10-01T00:00:00.000Z",
+    };
+    const registry = new VerificationMethodRegistry(() => baseRecord);
+    const context = {
+      purpose: "hacp:action",
+      proofCreatedAt: "2026-09-14T12:00:00.000Z",
+      verificationTime: new Date("2026-10-02T00:00:00.000Z"),
+    };
+    expect(await registry.authorizeVerificationMethod(identity, baseRecord.id, context)).toBe(true);
+
+    const revokedRegistry = new VerificationMethodRegistry(() => ({
+      ...baseRecord,
+      revokedAt: "2026-10-01T12:00:00.000Z",
+    }));
+    expect(
+      await revokedRegistry.authorizeVerificationMethod(identity, baseRecord.id, context),
+    ).toBe(false);
   });
 });

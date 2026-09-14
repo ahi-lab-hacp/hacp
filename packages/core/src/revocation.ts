@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { createProof, createProofWithProvider, verifyProof, withoutProof } from "./crypto.js";
 import { HacpError } from "./errors.js";
+import { verificationContext } from "./keys.js";
 import {
   HACP_VERSION,
   type KeyResolver,
@@ -65,6 +66,7 @@ export interface VerifyRevocationRecordOptions {
   authorizeIssuer(objectRef: string, issuer: string): boolean | Promise<boolean>;
   authorizeVerificationMethod: VerificationMethodAuthorizer;
   resolveKey: KeyResolver;
+  verificationTime?: Date;
 }
 
 export async function verifyRevocationRecord(
@@ -88,6 +90,11 @@ export async function verifyRevocationRecord(
     !(await options.authorizeVerificationMethod(
       revocation.issuer,
       revocation.proof.verificationMethod,
+      verificationContext(
+        "hacp:revocation",
+        revocation.proof.createdAt,
+        options.verificationTime ?? new Date(),
+      ),
     ))
   ) {
     return false;
@@ -117,7 +124,10 @@ export class VerifiedRevocationResolver implements RevocationResolver {
         }
         continue;
       }
-      const valid = await verifyRevocationRecord(record, this.#options);
+      const valid = await verifyRevocationRecord(record, {
+        ...this.#options,
+        verificationTime: at,
+      });
       if (!valid) {
         if (this.#options.strict !== false) {
           throw new HacpError("INVALID_REVOCATION", "Revocation proof or issuer is invalid");

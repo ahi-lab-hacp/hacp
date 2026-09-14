@@ -6,6 +6,7 @@ import { createProofAsync, verifyProof, withoutProof } from "./crypto.js";
 import { decisionAttestationPayload, verifyDecisionAttestation } from "./decision.js";
 import { HacpError } from "./errors.js";
 import { evaluateIntent } from "./intent.js";
+import { verificationContext } from "./keys.js";
 import { mandatePayload } from "./mandate.js";
 import {
   type Action,
@@ -78,7 +79,11 @@ function timeIsValid(iso: string): boolean {
   return Number.isFinite(Date.parse(iso));
 }
 
-async function verifyDecision(decision: Decision, options: VerificationOptions): Promise<boolean> {
+async function verifyDecision(
+  decision: Decision,
+  options: VerificationOptions,
+  now: Date,
+): Promise<boolean> {
   if (!(await verifyDecisionAttestation(decision, options.resolveKey))) return false;
   const proof = decision.attestation?.proof;
   if (!proof) return false;
@@ -86,7 +91,15 @@ async function verifyDecision(decision: Decision, options: VerificationOptions):
     (value): value is string => Boolean(value),
   );
   for (const identity of principalIds) {
-    if (await options.authorizeVerificationMethod(identity, proof.verificationMethod)) return true;
+    if (
+      await options.authorizeVerificationMethod(
+        identity,
+        proof.verificationMethod,
+        verificationContext("hacp:decision-attestation", proof.createdAt, now),
+      )
+    ) {
+      return true;
+    }
   }
   return false;
 }
@@ -95,6 +108,7 @@ async function verifyMandateChain(
   chain: Mandate[],
   decision: Decision,
   options: VerificationOptions,
+  now: Date,
 ): Promise<string[]> {
   const reasons: string[] = [];
   const narrowing = options.isConstraintSetNarrower ?? isConstraintSetNarrower;
@@ -116,7 +130,11 @@ async function verifyMandateChain(
       reasons.push("MANDATE_SIGNATURE_INVALID");
     }
     if (
-      !(await options.authorizeVerificationMethod(mandate.issuer, mandate.proof.verificationMethod))
+      !(await options.authorizeVerificationMethod(
+        mandate.issuer,
+        mandate.proof.verificationMethod,
+        verificationContext("hacp:mandate", mandate.proof.createdAt, now),
+      ))
     ) {
       reasons.push("MANDATE_SIGNER_NOT_AUTHORIZED");
     }
@@ -210,6 +228,7 @@ export async function verifyAction(options: VerificationOptions): Promise<Verifi
       !(await options.authorizeVerificationMethod(
         envelope.agent,
         envelope.proof.verificationMethod,
+        verificationContext("hacp:action", envelope.proof.createdAt, now),
       ))
     ) {
       return deny(["ACTION_SIGNER_NOT_AUTHORIZED"]);
@@ -222,9 +241,11 @@ export async function verifyAction(options: VerificationOptions): Promise<Verifi
     const leaf = chain.at(-1);
     if (!leaf) return deny(["MANDATE_NOT_FOUND"]);
     const decision = await options.resolveDecision(leaf.decisionRef);
-    if (!(await verifyDecision(decision, options))) return deny(["DECISION_ATTESTATION_INVALID"]);
+    if (!(await verifyDecision(decision, options, now))) {
+      return deny(["DECISION_ATTESTATION_INVALID"]);
+    }
 
-    const chainReasons = await verifyMandateChain(chain, decision, options);
+    const chainReasons = await verifyMandateChain(chain, decision, options, now);
     if (chainReasons.length > 0) return deny(chainReasons);
 
     if (leaf.subject !== envelope.agent) return deny(["MANDATE_SUBJECT_MISMATCH"]);

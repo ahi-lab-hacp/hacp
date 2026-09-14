@@ -1,14 +1,14 @@
-import { describe, expect, it } from "vitest";
 import {
+  type ActionEnvelope,
   createActionEnvelope,
   generateEd25519KeyPair,
-  HacpError,
   HACP_VERSION,
+  HacpError,
   InMemoryNonceStore,
-  type ActionEnvelope,
   type Mandate,
   type Signer,
 } from "@ahi-lab-hacp/core";
+import { describe, expect, it } from "vitest";
 import {
   createHacpDiscoveryDocument,
   createHacpDiscoveryResponse,
@@ -218,6 +218,19 @@ describe("HTTP binding", () => {
     );
     expect(response.status).toBe(403);
     expect(response.headers.get("content-type")).toContain("application/hacp+json");
+  });
+
+  it("rejects incomplete structured Agent authentication metadata", async () => {
+    const fixture = verificationFixture();
+    const handler = createHacpHandler({
+      ...fixture.options,
+      authenticateAgent: () => ({ id: fixture.agent, method: "" }),
+      onAllow: () => new Response("unexpected"),
+    });
+    const response = await handler(
+      createHacpRequest("https://api.example/action", { envelope: fixture.envelope }),
+    );
+    expect(response.status).toBe(422);
   });
 
   it("keeps the protected operation behind the default-deny receiver boundary", async () => {

@@ -21,6 +21,18 @@ const result = await verifyHacpRequest(request, {
 });
 ```
 
+`requireHacp()` accepts structured authentication metadata from a validated
+OAuth, mTLS, or workload-identity adapter. The verifier uses its `id`, while the
+full method and credential identifier remain available for receiver auditing:
+
+```ts
+authenticateAgent: async (request) => ({
+  id: (await validateWorkloadCredential(request)).subject,
+  method: "MTLS",
+  credentialId: "client-certificate-fingerprint",
+})
+```
+
 Responses use `application/hacp+json` and contain a signed Receipt:
 
 - `200` for `ALLOW`;

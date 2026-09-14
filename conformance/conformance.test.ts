@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { describe, expect, it } from "vitest";
 import { canonicalize, type JsonValue } from "@ahi-lab-hacp/core";
+import { describe, expect, it } from "vitest";
 
 interface CanonicalizationVector {
   name: string;

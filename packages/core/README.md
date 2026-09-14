@@ -43,9 +43,18 @@ ActionEnvelope creation, revocation, delegated Mandates, and Receipt signing.
 The provider must enforce which HACP purpose and identity its key may sign; do
 not expose a general-purpose signing endpoint to the model.
 
+`attestApprovedDecisionWithProvider()` additionally requires an atomic,
+one-time `ApprovalGrant` bound to the exact proposed Decision digest. The grant
+must come from a separately authenticated approval service, not the Agent.
+
 ## Verified revocation
 
 `VerifiedRevocationResolver` checks the revocation proof, proof-to-issuer
 authorization, object reference, effective time, and deployment-defined issuer
 authority. Strict mode is the default and fails closed when a registry returns
 an invalid record.
+
+`VerificationMethodRegistry` supports key activation, retirement, compromise
+revocation, and historical public-key resolution. `DurableNonceStore` adapts an
+atomic database insert to HACP replay protection. See the
+[production deployment boundary](../../docs/production-deployment.md).

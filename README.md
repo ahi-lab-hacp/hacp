@@ -36,7 +36,8 @@ Protocol specification: [ahi-lab.com/hacp](https://ahi-lab.com/hacp)
 
 Repository specification: [`specification/hacp.md`](specification/hacp.md) ·
 [Standardization and adoption plan](STANDARDIZATION.md) ·
-[Implementation registry](IMPLEMENTERS.md)
+[Implementation registry](IMPLEMENTERS.md) ·
+[Production deployment boundary](docs/production-deployment.md)
 
 ## Why HACP is needed
 

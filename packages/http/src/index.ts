@@ -1,8 +1,8 @@
 import {
-  HACP_VERSION,
-  HacpError,
   type ActionEnvelope,
   type AssuranceLevel,
+  HACP_VERSION,
+  HacpError,
   type VerificationOptions,
   type VerificationResult,
   verifyAction,
@@ -151,14 +151,29 @@ export function createVerificationResponse(result: VerificationResult): Response
 }
 
 export interface HacpHandlerContext {
+  authentication: AuthenticatedAgent;
   request: Request;
   verification: VerificationResult;
 }
 
+export interface AuthenticatedAgent {
+  credentialId?: string;
+  id: string;
+  method: string;
+}
+
+export type AgentAuthenticationResult = AuthenticatedAgent | string;
+
 export interface CreateHacpHandlerOptions
   extends Omit<VerifyHacpRequestOptions, "authenticatedAgent"> {
-  authenticateAgent(request: Request): Promise<string> | string;
+  authenticateAgent(
+    request: Request,
+  ): AgentAuthenticationResult | Promise<AgentAuthenticationResult>;
   onAllow(context: HacpHandlerContext): Promise<Response> | Response;
+}
+
+function normalizeAuthentication(result: AgentAuthenticationResult): AuthenticatedAgent {
+  return typeof result === "string" ? { id: result, method: "APPLICATION_DEFINED" } : result;
 }
 
 export function createHacpHandler(
@@ -166,10 +181,19 @@ export function createHacpHandler(
 ): (request: Request) => Promise<Response> {
   return async (request) => {
     try {
-      const authenticatedAgent = await options.authenticateAgent(request);
-      const verification = await verifyHacpRequest(request, { ...options, authenticatedAgent });
+      const authentication = normalizeAuthentication(await options.authenticateAgent(request));
+      if (!authentication.id || !authentication.method) {
+        throw new HacpError(
+          "AGENT_AUTHENTICATION_FAILED",
+          "Agent authentication must provide an identity and method",
+        );
+      }
+      const verification = await verifyHacpRequest(request, {
+        ...options,
+        authenticatedAgent: authentication.id,
+      });
       if (verification.receipt.verdict !== "ALLOW") return createVerificationResponse(verification);
-      return options.onAllow({ request, verification });
+      return options.onAllow({ authentication, request, verification });
     } catch (error) {
       if (!(error instanceof HacpError)) throw error;
       return Response.json(

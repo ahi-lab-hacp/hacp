@@ -7,6 +7,8 @@
 - Human versus institutional attestation levels
 - Monotonic delegation attenuation
 - Receiver-side identity, audience, time, nonce, scope, constraint, revocation, and policy checks
+- Mandatory intent-to-action binding and one-time approval-grant integration
+- Isolated signing, verified revocation, durable nonce, and key-lifecycle adapters
 - Fetch-compatible HTTP binding
 - JSON Schema and canonicalization vectors
 - TypeScript SDK, CLI, tests, examples, CI, and documented manual releases
@@ -15,7 +17,7 @@
 
 - Independent implementation feedback
 - Expanded positive and negative signature vectors
-- Durable nonce and revocation adapters
+- Database-specific durable nonce and revocation adapters
 - OpenAPI description for the HTTP binding
 - Standards-aligned signature profile evaluation using RFC 8785, RFC 9421, JWS, and W3C Data Integrity
 - Public `/.well-known/hacp.json` discovery profile
@@ -27,7 +29,7 @@
 
 - Selective-disclosure evidence profile
 - Transparency-log integration profile
-- Key rotation and incident-time verification guidance
+- Expanded incident-time and historical key verification profiles
 - Policy decision interoperability tests
 - Go verifier SDK and gateway integration
 - External security review
