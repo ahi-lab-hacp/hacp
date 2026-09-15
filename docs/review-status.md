@@ -14,6 +14,9 @@ Repository CI, project-maintained conformance vectors, the ticket demonstration,
 and the Cofeat integration provide implementation evidence. They are not an
 independent security assessment or certification.
 
+The published 0.2 package verification, including an installation from a fresh
+project, is recorded in [releases/0.2.0.md](releases/0.2.0.md).
+
 ## Feedback sought
 
 The project welcomes independent review of:
