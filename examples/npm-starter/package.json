@@ -1,0 +1,17 @@
+{
+  "name": "hacp-npm-agent-server-starter",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Minimal HACP Agent and Receiver using published npm packages",
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@ahi-lab-hacp/core": "0.2.0",
+    "@ahi-lab-hacp/http": "0.2.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
