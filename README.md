@@ -55,42 +55,6 @@ six verification gates, and verifier-signed Receipt. It makes clear which gate
 rejects an altered identity, invalid signature, intent mismatch, exceeded limit,
 or replay.
 
-## Prompt injection: what HACP does and does not do
-
-HACP does not detect or prevent prompt injection. It provides an authorization
-boundary that can stop a successful injection from becoming an unauthorized
-external effect.
-
-For example, a malicious page may manipulate a legitimate travel agent after
-Alice authorizes one ticket for at most USD 600. Agent authentication alone can
-still succeed because the caller is the legitimate agent. A HACP-enforcing
-receiver additionally compares the requested action with Alice's signed
-Decision and Mandate. A request for 100 tickets, a different destination, or an
-unapproved target is denied even though the agent identity is valid.
-
-This protection has explicit limits:
-
-- an injected action that remains inside the signed authority can still pass;
-- a malicious or overly broad Decision can authorize harmful actions;
-- a human or institution may approve an incorrectly extracted Decision;
-- a malicious receiver can ignore the protocol;
-- an unprotected tool or network path can bypass the verification boundary;
-- compromised signing keys undermine the authority they represent.
-
-Deployments therefore need HACP verification at the protected-action boundary,
-least-privilege Mandates, human review for consequential intent changes,
-isolated signing keys, independent agent authentication, and the usual layered
-defenses such as prompt-injection detection, sandboxing, and receiver-local
-policy. HACP complements those controls; it does not replace them.
-
-Prompt injection is a documented security risk: OpenAI describes
-[prompt injection](https://openai.com/safety/prompt-injections/) as an evolving
-challenge that can mislead agents into unintended actions. A related but
-distinct concern is agentic misalignment; Anthropic has published
-[controlled research](https://www.anthropic.com/research/agentic-misalignment)
-on that behavior. Anthropic's reported cases are simulated evaluations, not
-reported real-world incidents.
-
 ## The trust boundary
 
 Natural-language extraction is probabilistic. Authorization must not be.
@@ -388,7 +352,14 @@ hacp/
 
 ## Security
 
-HACP carries authorization evidence; incorrect integrations can create real-world effects. Before production use:
+HACP carries authorization evidence; incorrect integrations can create real-world effects.
+
+HACP does not detect or prevent prompt injection. It limits the consequences by
+requiring external actions to remain within signed human authority. See the
+[threat model](docs/threat-model.md#prompt-injection-boundary) for limitations
+and deployment requirements.
+
+Before production use:
 
 - use hardware-backed or managed signing keys;
 - authenticate agents independently of the envelope;
