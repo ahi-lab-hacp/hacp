@@ -49,6 +49,48 @@ HACP gives the legitimate request a verifiable chain: Alice's reviewed decision,
 
 [Run the live ticket-booking demonstration](https://hacp-ticket-demo-dmy3rfwd7q-uw.a.run.app) to compare a valid one-ticket USD 542 booking with wrong-identity, over-budget, 100-ticket intent-mismatch, tampered, and replayed Agent requests. Every case returns a signed Receipt, and the complete protocol objects and public keys are inspectable.
 
+The interactive under-the-hood view follows a selected request from the source
+communication through its signed Decision, Mandate, authenticated HTTP action,
+six verification gates, and verifier-signed Receipt. It makes clear which gate
+rejects an altered identity, invalid signature, intent mismatch, exceeded limit,
+or replay.
+
+## Prompt injection: what HACP does and does not do
+
+HACP does not detect or prevent prompt injection. It provides an authorization
+boundary that can stop a successful injection from becoming an unauthorized
+external effect.
+
+For example, a malicious page may manipulate a legitimate travel agent after
+Alice authorizes one ticket for at most USD 600. Agent authentication alone can
+still succeed because the caller is the legitimate agent. A HACP-enforcing
+receiver additionally compares the requested action with Alice's signed
+Decision and Mandate. A request for 100 tickets, a different destination, or an
+unapproved target is denied even though the agent identity is valid.
+
+This protection has explicit limits:
+
+- an injected action that remains inside the signed authority can still pass;
+- a malicious or overly broad Decision can authorize harmful actions;
+- a human or institution may approve an incorrectly extracted Decision;
+- a malicious receiver can ignore the protocol;
+- an unprotected tool or network path can bypass the verification boundary;
+- compromised signing keys undermine the authority they represent.
+
+Deployments therefore need HACP verification at the protected-action boundary,
+least-privilege Mandates, human review for consequential intent changes,
+isolated signing keys, independent agent authentication, and the usual layered
+defenses such as prompt-injection detection, sandboxing, and receiver-local
+policy. HACP complements those controls; it does not replace them.
+
+Prompt injection is a documented security risk: OpenAI describes
+[prompt injection](https://openai.com/safety/prompt-injections/) as an evolving
+challenge that can mislead agents into unintended actions. A related but
+distinct concern is agentic misalignment; Anthropic has published
+[controlled research](https://www.anthropic.com/research/agentic-misalignment)
+on that behavior. Anthropic's reported cases are simulated evaluations, not
+reported real-world incidents.
+
 ## The trust boundary
 
 Natural-language extraction is probabilistic. Authorization must not be.
@@ -305,7 +347,9 @@ pnpm --filter @hacp-example/basic start
 | [`examples/basic`](examples/basic) | Smallest complete Decision → Mandate → ActionEnvelope → Receipt flow | `pnpm --filter @hacp-example/basic start` |
 | [`examples/ticket-booking`](examples/ticket-booking) | Human-language extraction, HTTP binding, independent agent authentication, price/scope enforcement, tamper detection, replay protection, and signed receipts | `pnpm --filter @hacp-example/ticket-booking start` |
 
-The ticket-booking demo intentionally sends one valid request and four invalid requests, making the protocol's security boundaries visible in a single console table.
+The ticket-booking demo intentionally sends one valid request and five invalid
+requests, making the protocol's security boundaries visible in the console and
+the interactive under-the-hood trace.
 
 ## Verification order
 
