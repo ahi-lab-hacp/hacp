@@ -2,6 +2,13 @@
 
 HACP is authorization infrastructure. Please report vulnerabilities privately and do not create a public issue containing exploit details.
 
+## Review status
+
+HACP has not completed an independent protocol, cryptographic, or implementation
+security review. The current packages are experimental and should be evaluated
+as one layer in a defense-in-depth design, not as a sole production security
+boundary. See the public [review status](docs/review-status.md).
+
 ## Reporting
 
 Use GitHub's private vulnerability reporting feature for `ahi-lab-hacp/hacp`. If that feature is unavailable, email **hello@ahi-lab.com** with the subject `HACP security report`.

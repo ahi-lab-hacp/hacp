@@ -17,6 +17,11 @@ security certification or endorsement.
 
 No independent implementation has been verified yet.
 
+Experimental implementers are encouraged to start in observation mode, report
+ambiguous or non-interoperable behavior, and avoid claiming security
+certification. See the [adoption guide](docs/adoption.md) and current
+[review status](docs/review-status.md).
+
 To add one, submit an implementation report containing:
 
 - repository and released version;
@@ -31,3 +36,6 @@ An implementation is independent when its protocol-critical code is maintained
 outside the `ahi-lab-hacp` organization and is not a repackaging of the
 TypeScript reference implementation.
 
+Design reviewers who are not yet implementing HACP can submit public feedback
+using the review-feedback issue template. Potential vulnerabilities must be
+reported privately according to [SECURITY.md](SECURITY.md).

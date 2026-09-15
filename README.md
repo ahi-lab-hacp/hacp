@@ -3,8 +3,13 @@
 [![CI](https://github.com/ahi-lab-hacp/hacp/actions/workflows/ci.yml/badge.svg)](https://github.com/ahi-lab-hacp/hacp/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-black.svg)](LICENSE)
 [![Protocol](https://img.shields.io/badge/HACP-0.1-black.svg)](https://ahi-lab.com/hacp)
+[![Maturity](https://img.shields.io/badge/maturity-experimental-black.svg)](docs/adoption.md)
 
 HACP is an authorization and provenance layer that makes consequential agent actions traceable to a human or institutional decision.
+
+> **Experimental:** HACP 0.1 is ready for prototypes, interoperability testing,
+> and monitored pilots. It has not completed an independent security review and
+> must not be the sole security boundary for production systems.
 
 Agent authentication answers **which software is making a request**. Conventional authorization answers **whether that software has a credential or scope**. HACP answers the missing questions:
 
@@ -37,7 +42,8 @@ Protocol specification: [ahi-lab.com/hacp](https://ahi-lab.com/hacp)
 Repository specification: [`specification/hacp.md`](specification/hacp.md) ·
 [Standardization and adoption plan](STANDARDIZATION.md) ·
 [Implementation registry](IMPLEMENTERS.md) ·
-[Production deployment boundary](docs/production-deployment.md)
+[Production deployment boundary](docs/production-deployment.md) ·
+[Review status](docs/review-status.md)
 
 ## Why HACP is needed
 
@@ -178,12 +184,36 @@ HACP is language-neutral. TypeScript is the 0.1 reference implementation, follow
 
 ## Install
 
-Packages are published under the `@ahi-lab-hacp` npm scope. During repository development:
+Packages are published under the `@ahi-lab-hacp` npm scope:
+
+```bash
+npm install @ahi-lab-hacp/core @ahi-lab-hacp/http
+```
+
+For repository development:
 
 ```bash
 pnpm install
 pnpm check
 ```
+
+## Adoption modes
+
+Start with evidence before enforcement. HACP integrations should progress
+through these modes:
+
+1. **Observe** — accept existing traffic, verify HACP when present, and record
+   the verdict without changing the external effect.
+2. **Prefer** — use valid HACP provenance to grant narrower automation paths,
+   higher confidence, or less manual review.
+3. **Require for selected actions** — reject missing or invalid HACP only on
+   explicitly chosen consequential operations after operational validation.
+4. **HACP-only** — do not use this as a general production policy while HACP is
+   experimental and independently unaudited.
+
+See the [experimental adoption guide](docs/adoption.md) for rollout criteria,
+rollback requirements, and the boundary between HACP and existing
+authentication and authorization.
 
 ## Quick start
 
@@ -309,6 +339,7 @@ pnpm --filter @hacp-example/basic start
 | Example | What it demonstrates | Run |
 | --- | --- | --- |
 | [`examples/basic`](examples/basic) | Smallest complete Decision → Mandate → ActionEnvelope → Receipt flow | `pnpm --filter @hacp-example/basic start` |
+| [`examples/npm-starter`](examples/npm-starter) | Minimal Agent and Receiver using only published npm packages | `npm install && npm start` |
 | [`examples/ticket-booking`](examples/ticket-booking) | Human-language extraction, HTTP binding, independent agent authentication, price/scope enforcement, tamper detection, replay protection, and signed receipts | `pnpm --filter @hacp-example/ticket-booking start` |
 
 The ticket-booking demo intentionally sends one valid request and five invalid
@@ -387,6 +418,12 @@ Changes that affect canonical bytes, proof construction, verification order, or 
 ## Governance and roadmap
 
 HACP is stewarded by the `ahi-lab-hacp` organization and welcomes implementers from outside AHI.lab. See [GOVERNANCE.md](GOVERNANCE.md), [CONTRIBUTING.md](CONTRIBUTING.md), and [ROADMAP.md](ROADMAP.md).
+
+No independent implementation or security review has been completed yet. Read
+the current [review status](docs/review-status.md), submit an
+[implementation report](https://github.com/ahi-lab-hacp/hacp/issues/new?template=implementation-report.yml),
+or provide public
+[review feedback](https://github.com/ahi-lab-hacp/hacp/issues/new?template=review-feedback.yml).
 
 ## License
 

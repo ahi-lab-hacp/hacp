@@ -1,0 +1,51 @@
+name: Independent review feedback
+description: Report public protocol, interoperability, or deployment feedback
+title: "review: "
+labels: [review]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reviewing HACP. Do not include vulnerabilities, exploit details, credentials, or sensitive production information here. Use GitHub private vulnerability reporting for security issues.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Review area
+      options:
+        - Protocol semantics
+        - Cryptographic construction
+        - Identity and delegation
+        - Intent and constraint evaluation
+        - HTTP binding
+        - Cross-language interoperability
+        - Deployment and operations
+        - Privacy
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Describe your implementation, review method, or deployment assumptions.
+    validations:
+      required: true
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Finding or feedback
+      description: Explain the ambiguity, interoperability issue, or proposed improvement without including exploit details.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction or evidence
+      description: Include non-sensitive examples, conformance vectors, or links when available.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: This report contains no vulnerability details or sensitive data.
+          required: true
