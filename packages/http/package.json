@@ -1,8 +1,17 @@
 {
   "name": "@ahi-lab-hacp/http",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Fetch-compatible HTTP binding and middleware for HACP",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/ahi-lab-hacp/hacp/tree/main/packages/http#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahi-lab-hacp/hacp.git",
+    "directory": "packages/http"
+  },
+  "bugs": {
+    "url": "https://github.com/ahi-lab-hacp/hacp/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
@@ -28,7 +37,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ahi-lab-hacp/core": "^0.1.0"
+    "@ahi-lab-hacp/core": "^0.2.0"
   },
   "publishConfig": {
     "access": "public",

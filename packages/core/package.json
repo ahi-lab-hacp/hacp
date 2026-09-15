@@ -1,8 +1,17 @@
 {
   "name": "@ahi-lab-hacp/core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Core types, cryptography, and verification for HACP",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/ahi-lab-hacp/hacp/tree/main/packages/core#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahi-lab-hacp/hacp.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/ahi-lab-hacp/hacp/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",

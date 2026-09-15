@@ -1,6 +1,6 @@
 {
   "name": "@hacp-example/ticket-booking",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "description": "Runnable and deployable HACP ticket-booking interoperability demonstration",
   "type": "module",

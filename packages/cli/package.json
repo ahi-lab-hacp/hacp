@@ -1,8 +1,17 @@
 {
   "name": "@ahi-lab-hacp/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command-line tools for HACP keys, canonicalization, and receipts",
   "license": "Apache-2.0",
+  "homepage": "https://github.com/ahi-lab-hacp/hacp/tree/main/packages/cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahi-lab-hacp/hacp.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/ahi-lab-hacp/hacp/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,7 +32,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ahi-lab-hacp/core": "^0.1.0"
+    "@ahi-lab-hacp/core": "^0.2.0"
   },
   "publishConfig": {
     "access": "public",
