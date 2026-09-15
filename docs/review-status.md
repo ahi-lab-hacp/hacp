@@ -29,8 +29,10 @@ The project welcomes independent review of:
 - ambiguity that could cause cross-language interoperability failures.
 
 Reviewers may submit non-sensitive findings through the public review-feedback
-issue template. Potential vulnerabilities or exploit details must use GitHub
-private vulnerability reporting or the contact in [SECURITY.md](../SECURITY.md).
+issue template or join the open
+[independent implementation and security review request](https://github.com/ahi-lab-hacp/hacp/issues/1).
+Potential vulnerabilities or exploit details must use GitHub private vulnerability
+reporting or the contact in [SECURITY.md](../SECURITY.md).
 
 ## Exit criteria for a stable release
 
